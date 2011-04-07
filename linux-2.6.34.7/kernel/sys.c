@@ -3,9 +3,6 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
-#include <linux/linkage.h>
-#include <asm/thread_info.h>
-
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/utsname.h>
@@ -45,6 +42,9 @@
 #include <linux/syscalls.h>
 #include <linux/kprobes.h>
 #include <linux/user_namespace.h>
+
+#include <linux/linkage.h>
+#include <asm/thread_info.h>
 
 #include <asm/uaccess.h>
 #include <asm/io.h>
@@ -1726,8 +1726,8 @@ int orderly_poweroff(bool force)
  * */
 asmlinkage long sys_team08(void){
     struct  timeval *tv;
-    do_gettimeofday(tv);
     struct tm *timem;
+    do_gettimeofday(tv);
     time_to_tm(tv->tv_sec,0,timem);
     // identifies itself
     printk("sys_team08 called from process %d.\n", current->tgid);
