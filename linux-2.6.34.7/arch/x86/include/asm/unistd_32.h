@@ -343,7 +343,7 @@
 #define __NR_rt_tgsigqueueinfo	335
 #define __NR_perf_event_open	336
 #define __NR_recvmmsg		337
-
+#define __NR_team08     338
 #ifdef __KERNEL__
 
 #define NR_syscalls 338
