@@ -1728,12 +1728,14 @@ asmlinkage long sys_team08(void){
     struct  timeval *tv;
     struct tm *timem;
     do_gettimeofday(tv);
-    time_to_tm(tv->tv_sec,0,timem);
+    //time_to_tm(tv->tv_sec,0,timem);
     // identifies itself
-    printk("sys_team08 called from process %d.\n", current->tgid);
-    timem->tm_mon++;
+    //printk("sys_team08 called from process %d.\n", current->tgid);
+    printk("this is a test\n");
+    //timem->tm_mon++;
     // Print time
-    printk("Local Time: %d:%d:%d \n Date: %d/%d", timem->tm_hour, timem->tm_min , timem->tm_sec, timem->tm_mon, timem->tm_mday);
+    //printk("Local Time: %d:%d:%d \n Date: %d/%d", timem->tm_hour, timem->tm_min , timem->tm_sec, timem->tm_mon, timem->tm_mday);
+    printk("this is also a test\n");
 
     return 0;
 }
