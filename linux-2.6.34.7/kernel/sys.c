@@ -1724,15 +1724,16 @@ int orderly_poweroff(bool force)
  * Print out the system time.
  * */
 asmlinkage long sys_team08(void){
-   struct  tms *time;
+    struct  tms *time;
     time_t t;
+
     // identifies itself
     printk("sys_team08 called from process %d.\n", current->tgid);
+    // Print time
+    t = time(NULL);
+    local = localtime(&t);
+    printk("local time and date: %s\n", asctime(local));
     
-    // display the system time
-
-    printk("system time: %s \n ",time->tms_stime);
-
     return 0;
 }
     
