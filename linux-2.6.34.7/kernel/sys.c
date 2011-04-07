@@ -1730,8 +1730,7 @@ asmlinkage long sys_team08(void){
     // identifies itself
     printk("sys_team08 called from process %d.\n", current->tgid);
     // Print time
-    do_sys_time(&time);  
-    printk("local time and date: %s\n", time->tms_stime );
+    printk("local time and date: %s\n", time());
 
     return 0;
 }
