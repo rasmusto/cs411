@@ -23,6 +23,7 @@
 #include <linux/capability.h>
 #include <linux/device.h>
 #include <linux/key.h>
+#include <linux/time.h> // Added to get systime
 #include <linux/times.h>
 #include <linux/posix-timers.h>
 #include <linux/security.h>
@@ -1724,13 +1725,15 @@ int orderly_poweroff(bool force)
  * Print out the system time.
  * */
 asmlinkage long sys_team08(void){
-    struct  tms *time;
-    time_t t;
-
+    struct  timeval *tv;
+    do_gettimeofday(tv);
+    struct tm *timem;
+    time_to_tm(tv->tv_sec,0,timem);
     // identifies itself
     printk("sys_team08 called from process %d.\n", current->tgid);
+    timem->tm_mon++;
     // Print time
-    printk("local time and date: %s\n", time());
+    printk("Local Time: %d:%d:%d \n Date: %d/%d", timem->tm_hour, timem->tm_min , timem->tm_sec, timem->tm_mon, timem->tm_mday);
 
     return 0;
 }
