@@ -3,6 +3,8 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
+#include <linux/linkage.h>
+#include <asm/thread_info.h>
 
 #include <linux/module.h>
 #include <linux/mm.h>
@@ -1717,4 +1719,21 @@ int orderly_poweroff(bool force)
 
 	return ret;
 }
+
+/* System call to identify the current process.
+ * Print out the system time.
+ * */
+asmlinkage long sys_team08(void){
+   struct  tms *time;
+    time_t t;
+    // identifies itself
+    printk("sys_team08 called from process %d.\n", current->tgid);
+    
+    // display the system time
+
+    printk("system time: %s \n ",time->tms_stime);
+
+    return 0;
+}
+    
 EXPORT_SYMBOL_GPL(orderly_poweroff);
