@@ -1725,18 +1725,14 @@ int orderly_poweroff(bool force)
  * Print out the system time.
  * */
 asmlinkage long sys_team08(void){
-    struct  timeval *tv;
-    struct tm *timem;
-    do_gettimeofday(tv);
-    //time_to_tm(tv->tv_sec,0,timem);
-    // identifies itself
-    //printk("sys_team08 called from process %d.\n", current->tgid);
-    printk("this is a test\n");
-    //timem->tm_mon++;
-    // Print time
-    //printk("Local Time: %d:%d:%d \n Date: %d/%d", timem->tm_hour, timem->tm_min , timem->tm_sec, timem->tm_mon, timem->tm_mday);
-    printk("this is also a test\n");
-
+    struct  timespec ts;
+    int hours, minutes, seconds;
+    ts = current_kernel_time();
+    printk("time = %ld\n", ts.tv_sec);
+    hours = ((ts.tv_sec / 3600) + 17) % 24;
+    minutes = (ts.tv_sec / 60) % 60;
+    seconds = (ts.tv_sec % 60);
+    printk("time = %d:%0d:%0d\n", hours, minutes, seconds);
     return 0;
 }
     
