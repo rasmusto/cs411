@@ -1,12 +1,3 @@
-diff --git a/README b/README
-new file mode 100644
-index 0000000..86c691f
---- /dev/null
-+++ b/README
-@@ -0,0 +1,3 @@
-+To connect to the virtual machine:
-+ssh <engr_username>@flip.engr.oregonstate.edu
-+ssh -p 818 <engr_username OR root>@sonic-1.eecs.oregonstate.edu
 diff --git a/linux-2.6.34.7/arch/x86/include/asm/unistd_32.h b/linux-2.6.34.7/arch/x86/include/asm/unistd_32.h
 index beb9b5f..d86deab 100644
 --- a/linux-2.6.34.7/arch/x86/include/asm/unistd_32.h
@@ -33,7 +24,7 @@ index 8b37293..adc1b66 100644
 +
 +
 diff --git a/linux-2.6.34.7/kernel/sys.c b/linux-2.6.34.7/kernel/sys.c
-index 7cb426a..7a51af2 100644
+index 7cb426a..54d345f 100644
 --- a/linux-2.6.34.7/kernel/sys.c
 +++ b/linux-2.6.34.7/kernel/sys.c
 @@ -3,7 +3,6 @@
@@ -62,7 +53,7 @@ index 7cb426a..7a51af2 100644
  #include <asm/uaccess.h>
  #include <asm/io.h>
  #include <asm/unistd.h>
-@@ -1717,4 +1720,20 @@ int orderly_poweroff(bool force)
+@@ -1717,4 +1720,21 @@ int orderly_poweroff(bool force)
  
  	return ret;
  }
@@ -73,6 +64,7 @@ index 7cb426a..7a51af2 100644
 +asmlinkage long sys_team08(void){
 +    struct  timespec ts;
 +    int hours, minutes, seconds;
++    printk ("sys_team08 called from process %d.\n", current->tgid); 
 +    ts = current_kernel_time();
 +    printk("time = %ld\n", ts.tv_sec);
 +    hours = ((ts.tv_sec / 3600) + 17) % 24;
@@ -83,323 +75,3 @@ index 7cb426a..7a51af2 100644
 +}
 +    
  EXPORT_SYMBOL_GPL(orderly_poweroff);
-diff --git a/proj01-iosched/.built-in.o.cmd b/proj01-iosched/.built-in.o.cmd
-new file mode 100644
-index 0000000..23c14d5
---- /dev/null
-+++ b/proj01-iosched/.built-in.o.cmd
-@@ -0,0 +1 @@
-+cmd_/home/rasmusto/cs411/proj01-iosched/built-in.o :=  rm -f /home/rasmusto/cs411/proj01-iosched/built-in.o; ar rcs /home/rasmusto/cs411/proj01-iosched/built-in.o
-diff --git a/proj01-iosched/Makefile b/proj01-iosched/Makefile
-new file mode 100644
-index 0000000..80a2654
---- /dev/null
-+++ b/proj01-iosched/Makefile
-@@ -0,0 +1,12 @@
-+obj-m   := test-iosched.o
-+
-+KERNELDIR ?= /lib/modules/$(shell uname -r)/build
-+PWD       := $(shell pwd)
-+
-+all:
-+	$(MAKE) -C $(KERNELDIR) M=$(PWD)
-+
-+clean:
-+	rm -f *.o *~ core .depend .*.cmd *.ko *.mod.c
-+	rm -rf .tmp_versions
-+
-diff --git a/proj01-iosched/built-in.o b/proj01-iosched/built-in.o
-new file mode 100644
-index 0000000..8b277f0
---- /dev/null
-+++ b/proj01-iosched/built-in.o
-@@ -0,0 +1 @@
-+!<arch>
-diff --git a/proj01-iosched/proj01-iosched.c b/proj01-iosched/proj01-iosched.c
-new file mode 100644
-index 0000000..6e24dc8
---- /dev/null
-+++ b/proj01-iosched/proj01-iosched.c
-@@ -0,0 +1,130 @@
-+
-+/*
-+ * Team #8
-+ * - Jacob Cray
-+ * - Rodney Keeling
-+ * - Torben Rasmussen
-+ * - Helen Shin
-+ */
-+
-+/*
-+ * elevator noop
-+ */
-+#include <linux/blkdev.h>
-+#include <linux/elevator.h>
-+#include <linux/bio.h>
-+#include <linux/module.h>
-+#include <linux/slab.h>
-+#include <linux/init.h>
-+
-+struct proj01_data {
-+	struct list_head queue;
-+};
-+
-+static void proj01_merged_requests(struct request_queue *q, struct request *rq,
-+				 struct request *next)
-+{
-+	list_del_init(&next->queuelist);
-+}
-+
-+static int proj01_dispatch(struct request_queue *q, int force)
-+{
-+	struct noop_data *nd = q->elevator->elevator_data;
-+
-+	if (!list_empty(&nd->queue)) {
-+		struct request *rq;
-+		rq = list_entry(nd->queue.next, struct request, queuelist);
-+		list_del_init(&rq->queuelist);
-+		elv_dispatch_sort(q, rq);
-+		return 1;
-+	}
-+	return 0;
-+}
-+
-+static void proj01_add_request(struct request_queue *q, struct request *rq)
-+{
-+	struct noop_data *nd = q->elevator->elevator_data;
-+
-+	list_add_tail(&rq->queuelist, &nd->queue);
-+}
-+
-+static int proj01_queue_empty(struct request_queue *q)
-+{
-+	struct noop_data *nd = q->elevator->elevator_data;
-+
-+	return list_empty(&nd->queue);
-+}
-+
-+static struct request *
-+proj01_former_request(struct request_queue *q, struct request *rq)
-+{
-+	struct noop_data *nd = q->elevator->elevator_data;
-+
-+	if (rq->queuelist.prev == &nd->queue)
-+		return NULL;
-+	return list_entry(rq->queuelist.prev, struct request, queuelist);
-+}
-+
-+static struct request *
-+proj01_latter_request(struct request_queue *q, struct request *rq)
-+{
-+	struct noop_data *nd = q->elevator->elevator_data;
-+
-+	if (rq->queuelist.next == &nd->queue)
-+		return NULL;
-+	return list_entry(rq->queuelist.next, struct request, queuelist);
-+}
-+
-+static void *proj01_init_queue(struct request_queue *q)
-+{
-+	struct noop_data *nd;
-+
-+	nd = kmalloc_node(sizeof(*nd), GFP_KERNEL, q->node);
-+	if (!nd)
-+		return NULL;
-+	INIT_LIST_HEAD(&nd->queue);
-+	return nd;
-+}
-+
-+static void proj01_exit_queue(struct elevator_queue *e)
-+{
-+	struct noop_data *nd = e->elevator_data;
-+
-+	BUG_ON(!list_empty(&nd->queue));
-+	kfree(nd);
-+}
-+
-+static struct elevator_type elevator_noop = {
-+	.ops = {
-+		.elevator_merge_req_fn		= proj01_merged_requests,
-+		.elevator_dispatch_fn		= proj01_dispatch,
-+		.elevator_add_req_fn		= proj01_add_request,
-+		.elevator_queue_empty_fn	= proj01_queue_empty,
-+		.elevator_former_req_fn		= proj01_former_request,
-+		.elevator_latter_req_fn		= proj01_latter_request,
-+		.elevator_init_fn		= proj01_init_queue,
-+		.elevator_exit_fn		= proj01_exit_queue,
-+	},
-+	.elevator_name = "team08",
-+	.elevator_owner = THIS_MODULE,
-+};
-+
-+static int __init proj01_init(void)
-+{
-+	elv_register(&elevator_noop);
-+
-+	return 0;
-+}
-+
-+static void __exit proj01_exit(void)
-+{
-+	elv_unregister(&elevator_noop);
-+}
-+
-+module_init(noop_init);
-+module_exit(noop_exit);
-+
-+
-+MODULE_AUTHOR("Jacob Cray, Rodney Keeling, Torben Rasmussen, Helen Shin");
-+MODULE_LICENSE("GPL");
-+MODULE_DESCRIPTION("proj01 IO scheduler");
-diff --git a/proj01-iosched/typescript b/proj01-iosched/typescript
-new file mode 100644
-index 0000000..5dfdf18
---- /dev/null
-+++ b/proj01-iosched/typescript
-@@ -0,0 +1,128 @@
-+Script started on Wed 06 Apr 2011 08:54:12 PM PDT
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Dvvim Makefile[K
-+]0;keelingr@cs411vm: vim Makefile [?1049h[?1h=[1;43r[?12;25h[?12l[?25h[27m[m[H[2J[?25l[42;1H"Makefile" [New File][>c[1;1H[1m Makefile [m[7m                                                                                                                                                   [m[3;1H[1m[34m~                                                                                                                                                            [4;1H~                                                                                                                                                            [5;1H~                                                                                                                                                            [6;1H~                                                                                                                                                            [7;1H~                                                                                                                                                            [8;1H~                                                                                                                                                            [9;1H~                                                                                                                                                            [10;1H~                                                                                                                                                            [11;1H~                                                                                                                                                            [12;1H~                                                                                                                                                            [13;1H~                                                                                                                                                            [14;1H~                                                                                                                                                            [15;1H~                                                                                                                                                            [16;1H~                                                                                                                                                            [17;1H~                                                                                                                                                            [18;1H~                                                                                                                                                            [19;1H~                                                                                                                                                            [20;1H~                                                                                                                                                            [21;1H~                                                                                                                                                            [22;1H~                                                                                                                                                            [23;1H~                                                                                                                                                            [24;1H~                                                                                                                                                            [25;1H~                                                                                                                                                            [26;1H~                                                                                                                                                            [27;1H~                                                                                                                                                            [28;1H~                                                                                                                                                            [29;1H~                                                                                                                                                            [30;1H~                                                                                                                                                            [31;1H~                                                                                                                                                            [32;1H~                                                                                                                                                            [33;1H~                                                                                                                                                            [34;1H~                                                                                                                                                            [35;1H~                                                                                                                                                            [36;1H~                                                                                                                                                            [37;1H~                                                                                                                                                            [38;1H~                                                                                                                                                            [39;1H~                                                                                                                                                            [40;1H~                                                                                                                                                            [m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile   CWD: /home/keelingr/cs411/proj01-iosched   Line: 0/1:0                                                                    [41;1H ~/cs411/proj01-iosched/Makefile   CWD: /home/keelingr/cs411/proj01-iosched   Line: 0/1:0                                                                    [2;1H[?12l[?25hP+q436f\P+q6b75\P+q6b64\P+q6b72\P+q6b6c\P+q2332\P+q2334\P+q2569\P+q2a37\P+q6b31\[41;1H ~/cs411/proj01-iosched/Makefile   CWD: /home/keelingr/cs411/proj01-iosched   Line: 0/1:0                                                                    [2;1H[?25l[m[43;1H[1m-- INSERT --[m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile   CWD: /home/keelingr/cs411/proj01-iosched   Line: 0/1:1                                                                    [2;1H[?12l[?25h[m[1;1H[1m + Makefile [?25l[m
-+obj-m   := test-iosched.o[3;1H[K[4;1H[1m[36mKERNELDIR [m?= /lib/modules/[1m[36m$([m[1m[33mshell[m[1m[36m uname -r)[m[4;44H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 3/3:43                                                                [41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 3/3:28                                                                [4;28H[?12l[?25h[?25l[m[15C[1m[36m)[m/build
-+[1m[36mPWD       [m:= [1m[36m$([m[1m[33mshell[m[1m[36m pwd)[m[5;26H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 4/4:15                                                                [5;15H[?12l[?25h[?25l[m[6;1H[K[7;1H[1m[36mall:[m[7;5H[K[8;1H[1m[35m            [m[1m[36m$(MAKE)[m[8;20H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 7/7:11                                                                [8;14H[?12l[?25h[?25l[m[6C[1m[35m -C [m[1m[36m$(KERNELDIR)[m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 7/7:22                                                                [8;25H[?12l[?25h[?25l[m[11C[1m[35m M=[m[1m[36m$(PWD)[m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 7/7:37                                                                [8;40H[?12l[?25h[?25l[m[9;1H[K[10;1H[1m[36mclean:[m[10;7H[K[11;1H[1m[35m            rm -f *.o *~ core .depend .*.cmd *.ko *.mod.c[m[11;58H[K[12;1H[1m[35m                    rm -rf .tmp_versions[m[12;41H[K[13;1H[1m[35m                    [m[13;21H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 12/12:6                                                               [13;21H[?12l[?25h[m[43;1H[K[13;1H[?25l[42;1H[K[13;1H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 12/12:0                                                               [13;1H[?12l[?25h[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 12/12:0                                                               [13;1H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 12/12:0                                                               [13;1H[?25l[m[43;1H[1m-- VISUAL BLOCK --[m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 12/12:0                                                               [13;1H[?12l[?25h[?25l[m[12;1H[1m[7m[33m[41m                    [m[1m[35mrm -rf .tmp_versions[m
-+[1m[7m[33m[41m [m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 11/12:12                                                              [12;21H[?12l[?25h[?25l[m[11;1H[1m[7m[33m[41m            rm -f *.[m[1m[35mo *~ core .depend .*.cmd *.ko *.mod.c[m[12;21H[1m[7m[33m[41mr[m[1m[35mm -rf .tmp_versions[m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 10/12:18                                                              [11;21H[?12l[?25h[?25l[m[10;1H[1m[7m[33m[41mclean:[m[11;8H[1m[35m     rm -f *.o *~ core .depend .*.cmd *.ko *.mod.c[12;8H             rm -rf .tmp_versions[m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 9/12:7                                                                [10;7H[?12l[?25h[?25l[m[10;2H[1m[36mlean:[m[11;2H[1m[35m           rm -f *.o *~ core .depend .*.cmd *.ko *.mod.c[12;2H                   rm -rf .tmp_versions[m[13;1H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 8/12:0                                                                [9;1H[?12l[?25h[?25l[m[8;1H[1m[7m[33m[41m            $(MAKE) [m[1m[35m-C [m[1m[36m$(KERNELDIR)[m[1m[35m M=[m[1m[36m$(PWD)[m
-+[1m[7m[33m[41m 
-+clean:
-+            rm -f *.o[m[1m[35m *~ core .depend .*.cmd *.ko *.mod.c[m[12;2H[1m[7m[33m[41m                   r[m[1m[35mm -rf .tmp_versions[m
-+[1m[7m[33m[41m [m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 7/12:18                                                               [8;21H[?12l[?25h[?25l[m[7;1H[1m[7m[33m[41mall:[m[8;6H[1m[35m       [m[1m[36m$(MAKE)[m[1m[35m -C [m[1m[36m$(KERNELDIR)[m[1m[35m M=[m[1m[36m$(PWD)[10;6H:[m[11;6H[1m[35m       rm -f *.o *~ core .depend .*.cmd *.ko *.mod.c[12;6H               rm -rf .tmp_versions[m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 6/12:5                                                                [7;5H[?12l[?25h[?25l[m[7;2H[1m[36mll:[m[8;2H[1m[35m           [m[1m[36m$(MAKE)[m[1m[35m -C [m[1m[36m$(KERNELDIR)[m[1m[35m M=[m[1m[36m$(PWD)[m[9;1H[K[10;2H[1m[36mlean:[m[11;2H[1m[35m           rm -f *.o *~ core .depend .*.cmd *.ko *.mod.c[12;2H                   rm -rf .tmp_versions[m[13;1H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 5/12:0                                                                [6;1H[?12l[?25h[?25l[m[5;1H[1m[7m[33m[41mPWD       := $(shell[m[1m[36m pwd)[m
-+[1m[7m[33m[41m 
-+all:
-+            $(MAKE) -[m[1m[35mC [m[1m[36m$(KERNELDIR)[m[1m[35m M=[m[1m[36m$(PWD)[m
-+[1m[7m[33m[41m 
-+clean:
-+            rm -f *.o[m[1m[35m *~ core .depend .*.cmd *.ko *.mod.c[m[12;2H[1m[7m[33m[41m                   r[m[1m[35mm -rf .tmp_versions[m
-+[1m[7m[33m[41m [m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 4/12:21                                                               [5;21H[?12l[?25h[?25l[m[4;1H[1m[7m[33m[41mKERNELDIR ?= /lib/mo[5;21H [m[1m[36mpwd)[m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 3/12:21                                                               [4;21H[?12l[?25h[?25l[m[4;2H[1m[36mERNELDIR [m?= /lib/mod[5;2H[1m[36mWD       [m:= [1m[36m$([m[1m[33mshell[m[1m[36m pwd)[m[6;1H[K[7;2H[1m[36mll:[m[8;2H[1m[35m           [m[1m[36m$(MAKE)[m[1m[35m -C [m[1m[36m$(KERNELDIR)[m[1m[35m M=[m[1m[36m$(PWD)[m[9;1H[K[10;2H[1m[36mlean:[m[11;2H[1m[35m           rm -f *.o *~ core .depend .*.cmd *.ko *.mod.c[12;2H                   rm -rf .tmp_versions[m[13;1H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 2/12:0                                                                [3;1H[?12l[?25h[?25l[m[2;1H[1m[7m[33m[41mobj-m   := test-iosc
-+ 
-+KERNELDIR ?= /lib/mod
-+PWD       := $(shell [m[1m[36mpwd)[m
-+[1m[7m[33m[41m 
-+all:
-+            $(MAKE) -[m[1m[35mC [m[1m[36m$(KERNELDIR)[m[1m[35m M=[m[1m[36m$(PWD)[m
-+[1m[7m[33m[41m 
-+clean:
-+            rm -f *.o[m[1m[35m *~ core .depend .*.cmd *.ko *.mod.c[m[12;2H[1m[7m[33m[41m                   r[m[1m[35mm -rf .tmp_versions[m
-+[1m[7m[33m[41m [m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:21                                                               [2;21H[?12l[?25h[?25l[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:21                                                               [2;21H[?12l[?25h[?25l[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:21                                                               [2;21H[?12l[?25h[?25l[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:21                                                               [2;21H[?12l[?25h[?25l[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:21                                                               [2;21H[?12l[?25h[?25l[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:21                                                               [2;21H[?12l[?25h[?25l[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:21                                                               [2;21H[?12l[?25h[?25l[m[42;1H11 lines to indent... [43;1H[K[42;1H12 lines indented [42;19H[K[2;1Hobj-m   := test-iosch[3;1H[K[4;1H[1m[36mKERNELDIR [m?= /lib/modu
-+[1m[36mPWD       [m:= [1m[36m$([m[1m[33mshell[m[1m[36m pwd)[m[6;1H[K[7;1H[1m[36mall:[m
-+[1m[35m    [m[1m[36m$(MAKE)[m[1m[35m -C [m[1m[36m$(KERNELDIR)[m[1m[35m M=[m[1m[36m$(PWD)[m[8;37H[K[9;1H[K[10;1H[1m[36mclean:[m
-+[1m[35m    rm -f *.o *~ core .depend .*.cmd *.ko *.mod.c[m[11;50H[K[12;1H[1m[35m    rm -rf .tmp_versions[m[12;25H[K[13;1H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:1                                                                [2;1H[?12l[?25h[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 2/12:0                                                                [3;1H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 3/12:1                                                                [4;1H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 2/12:0                                                                [3;1H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:1                                                                [2;1H[?25l[m[43;1H[1m-- INSERT --[m[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:1                                                                [2;1H[?12l[?25h[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:2                                                                [2;2H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:3                                                                [2;3H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:4                                                                [2;4H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:10                                                               [2;10H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:16                                                               [2;16H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:17                                                               [2;17H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:21                                                               [2;21H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:20                                                               [2;20H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:19                                                               [2;19H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:18                                                               [2;18H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:17                                                               [2;17H[41;1H ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:16                                                               [2;16H[?25l[ms-iosched.o[2;25H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:15                                                               [2;15H[?12l[?25h[?25l[me-iosched.o[2;24H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:14                                                               [2;14H[?12l[?25h[?25l[mt-iosched.o[2;23H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:13                                                               [2;13H[?12l[?25h[?25l[m -iosched.o[2;22H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:12                                                               [2;12H[?12l[?25h[?25l[m p-iosched.o[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:13                                                               [2;13H[?12l[?25h[?25l[mpr-iosched.o[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:14                                                               [2;14H[?12l[?25h[?25l[mro-iosched.o[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:15                                                               [2;15H[?12l[?25h[?25l[moj-iosched.o[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:16                                                               [2;16H[?12l[?25h[?25l[mj0-iosched.o[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:17                                                               [2;17H[?12l[?25h[?25l[m01-iosched.o[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:18                                                               [2;18H[?12l[?25h[m[43;1H[K[2;17H[?25l[42;1H[K[41;1H[1m[33m[40m ~/cs411/proj01-iosched/Makefile[+]   CWD: /home/keelingr/cs411/proj01-iosched   Line: 1/12:17                                                               [2;17H[?12l[?25h[?25l[42;1H[m:[?12l[?25hw[?25l:wq:wq[?12l[?25h[?25l"Makefile" "Makefile" [New] 12L, 223C written
-+
-+[?1l>[?12l[?25h[?1049l]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Dmmake[K
-+]0;keelingr@cs411vm: make make -C /lib/modules/2.6.34.7-dev-g08ccd5c/build M=/home/keelingr/cs411/proj01-iosched
-+make[1]: Entering directory `/home/rasmusto/cs411/linux-2.6.34.7'
-+  LD      /home/keelingr/cs411/proj01-iosched/built-in.o
-+  CC [M]  /home/keelingr/cs411/proj01-iosched/proj01-iosched.o
-+  Building modules, stage 2.
-+  MODPOST 1 modules
-+  CC      /home/keelingr/cs411/proj01-iosched/proj01-iosched.mod.o
-+  LD [M]  /home/keelingr/cs411/proj01-iosched/proj01-iosched.ko
-+make[1]: Leaving directory `/home/rasmusto/cs411/linux-2.6.34.7'
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Dlls[K
-+]0;keelingr@cs411vm: ls [00m[00mbuilt-in.o[00m  [00mmodules.order[00m   [00mproj01-iosched.c[00m   [00mproj01-iosched.mod.c[00m  [00mproj01-iosched.o[00m
-+[00mMakefile[00m    [00mModule.symvers[00m  [00mproj01-iosched.ko[00m  [00mproj01-iosched.mod.o[00m  [00mtypescript[00m
-+[m]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Diins
-+[0;31mcompleting [1mexternal command[0m[0m
-+[00minsmod[0m             [00m[0m  [00minstall[0m            [00m[0m  [00minstall-info[0m       [00m[0m  [00minstallkernel[0m      [00m[0m  [00minstall-sgmlcatalog[0m  [00minstmodsh[0m          [00m
-+[0;31mcompleting [1mshell function[0m[0m
-+[00minsert-datestamp[0m             [00m[0m  [00minsert-files[0m                 [00m[0m  [00minsert-last-typed-word[0m       [00m[0m  [00minsert-unicode-char[0m          [00m
-+[0;31mcompleting [1malias[0m[0m
-+[J[00minsecscp[0m                                                     [00m[0m  [00m[Jinsecssh[0m                                                     [00m[J[6A[0m[27m[24m[0m[27m[24m[57Cins[K[95C [0m[27m[24m[96Dmod p
-+[J[A[65Croj01-iosched.ko [K
-+[J]0;keelingr@cs411vm: insmod proj01-iosched.ko insmod: error inserting 'proj01-iosched.ko': -1 Operation not permitted
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m1 [37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[94C:( [97Dssudo p ins
-+[0;31mcompleting [1mexternal command[0m[0m
-+[J[00minsmod[0m             [00m[0m  [00m[Jinstall[0m            [00m[0m  [00m[Jinstall-info[0m       [00m[0m  [00m[Jinstallkernel[0m      [00m[0m  [00m[Jinstall-sgmlcatalog[0m  [00m[Jinstmodsh[0m          [00m[J[A[A[0m[27m[24m[0m[27m[24m[59Csudo ins[K[86C:( [0m[27m[24m[89Dmod p
-+[J[A[72Croj01-iosched.ko[K
-+[J]0;keelingr@cs411vm: sudo insmod proj01-iosched.ko [sudo] password for keelingr: 
-+insmod: error inserting 'proj01-iosched.ko': -1 File exists
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m1 [37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[94C:( [97Drrmmod proj01_iosched                  r  ggit status[K
-+]0;keelingr@cs411vm: git status # On branch master
-+# Your branch is ahead of 'origin/master' by 1 commit.
-+#
-+# Changed but not updated:
-+#   (use "git add <file>..." to update what will be committed)
-+#
-+#	modified:   Makefile
-+#	modified:   proj01-iosched.c
-+#
-+# Untracked files:
-+#   (use "git add <file>..." to include in what will be committed)
-+#
-+#	.proj01-iosched.ko.cmd
-+#	.proj01-iosched.mod.o.cmd
-+#	.proj01-iosched.o.cmd
-+#	.tmp_versions/
-+#	Module.symvers
-+#	modules.order
-+#	proj01-iosched.ko
-+#	proj01-iosched.mod.c
-+#	proj01-iosched.mod.o
-+#	proj01-iosched.o
-+#	typescript
-+no changes added to commit (use "git add" and/or "git commit -a")
-+git status  6.74s user 1.80s system 30% cpu 27.641 total
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m1 [37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[94C:( [97Dgit status[10D          [10Drrmmod proj01_iosched [K
-+]0;keelingr@cs411vm: rmmod proj01_iosched ERROR: Module proj01_iosched is in use
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m1 [37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[94C:( [97Deecho  e  ssu[K
-+]0;keelingr@cs411vm: su Password: 
-+]0;root@cs411vm: /home/keelingr/cs411/proj01-iosched [1m[7m#[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[34m[37m[01;31mroot[00m@cs411vm [1m/home/keelingr/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m # [K[89C [90Deecho noop > /sys/sd
-+[J[0;31mNo matches for:[0m `file'[A[0m[27m[24m[0m[27m[24m[66Cecho noop > /sys/sd[K[70C [0m[27m[24m[71Db
-+[J[J[0;31mNo matches for:[0m `file'[A[0m[27m[24m[0m[27m[24m[66Cecho noop > /sys/sdb[K[69C [0m[27m[24m[70D   block/sd
-+[J[0;31mcompleting [1mfile[0m[0m
-+[J[01;36msda[00m[0m@[00m[0m  [00m[J[01;36msdb[00m[0m@[00m[J[A[A[0m[27m[24m[0m[27m[24m[66Cecho noop > /sys/block/sd[K[64C [0m[27m[24m[65Db/uevent       queue/scheduler [K
-+[J]0;root@cs411vm: echo noop > /sys/block/sdb/queue/scheduler ]0;root@cs411vm: /home/keelingr/cs411/proj01-iosched shinbo has logged on pts/4 from flip.
-+[1m[7m#[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[34m[37m[01;31mroot[00m@cs411vm [1m/home/keelingr/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m # [K[89C [90Decho noop > /sys/block/sdb/queue/scheduler/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D[30C[K[30D
-+]0;root@cs411vm: echo /sys/block/sdb/queue/scheduler /sys/block/sdb/queue/scheduler
-+]0;root@cs411vm: /home/keelingr/cs411/proj01-iosched [1m[7m#[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[34m[37m[01;31mroot[00m@cs411vm [1m/home/keelingr/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m # [K[89C [90Decho /sys/block/sdb/queue/scheduler[1C[1Co /sys/block/sdb/queue/scheduler [33D[1C /sys/block/sdb/queue/scheduler [32De /sys/block/sdb/queue/scheduler [32D /sys/block/sdb/queue/scheduler [32Dc /sys/block/sdb/queue/scheduler[31Dca /sys/block/sdb/queue/scheduler[31Dt /sys/block/sdb/queue/scheduler[31D[31C[K[31D
-+]0;root@cs411vm: cat /sys/block/sdb/queue/scheduler [noop] deadline cfq team08 
-+]0;root@cs411vm: /home/keelingr/cs411/proj01-iosched [1m[7m#[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[34m[37m[01;31mroot[00m@cs411vm [1m/home/keelingr/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m # [K[89C [90Dcat /sys/block/sdb/queue/scheduler[34Decho /sys/block/sdb/queue/scheduler[35Dcat /sys/block/sdb/queue/scheduler [34D                                  [34Deexit[K
-+]0;root@cs411vm: exit ]0;keelingr@cs411vm: ~/cs411/proj01-iosched crayj has logged on pts/3 from flip.
-+shinbo has logged on pts/4 from flip.
-+[1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Drrmmod proj01_iosched[K
-+]0;keelingr@cs411vm: rmmod proj01_iosched ERROR: Removing 'proj01_iosched': Operation not permitted
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m1 [37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[94C:( [97Drmmod proj01_iosched[20Dsu                  [18Drmmod proj01_ioschedsrmmod proj01_iosched[20Dsurmmod proj01_iosched[20Ddrmmod proj01_iosched[20Dormmod proj01_iosched[20D rmmod proj01_iosched[20D[20C[K[20D
-+]0;keelingr@cs411vm: sudo rmmod proj01_iosched ]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Dsudo rmmod proj01_iosched[25Drmmod proj01_iosched     [20Dsu                  [18Dgit status[10Dsudo insmod proj01-iosched.ko[K
-+]0;keelingr@cs411vm: sudo insmod proj01-iosched.ko ]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Dssudo echo > proj    team08 /sys/block/sdb/queue/scheduler [K
-+]0;keelingr@cs411vm: sudo echo > team08 /sys/block/sdb/queue/scheduler ]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Dsudo echo > team08 /sys/block/sdb/queue/scheduler/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31Ds/sys/block/sdb/queue/scheduler [31D/sys/block/sdb/queue/scheduler [31Dc/sys/block/sdb/queue/scheduler[30Dca/sys/block/sdb/queue/scheduler[30Dt/sys/block/sdb/queue/scheduler[30D /sys/block/sdb/queue/scheduler[30D[30C[K[30D
-+]0;keelingr@cs411vm: cat /sys/block/sdb/queue/scheduler [noop] deadline cfq team08 
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Dcat /sys/block/sdb/queue/scheduler[34Dsudo echo > team08 /sys/block/sdb/queue/scheduler team08 /sys/block/sdb/queue/scheduler [39Dteam08 /sys/block/sdb/queue/scheduler [39D team08 /sys/block/sdb/queue/scheduler [39D[1C[1C[1C[1C[1C[1C[1C[1C[1Co team08 /sys/block/sdb/queue/scheduler[38D[1C[1C[1C[1C[1C[1C[1C> /sys/block/sdb/queue/scheduler[31D > /sys/block/sdb/queue/scheduler[32D[32C[K[32D
-+]0;keelingr@cs411vm: sudo echo team08 > /sys/block/sdb/queue/scheduler zsh: permission denied: /sys/block/sdb/queue/scheduler
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m1 [37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[94C:( [97Dssu[K
-+]0;keelingr@cs411vm: su Password: 
-+]0;root@cs411vm: /home/keelingr/cs411/proj01-iosched [1m[7m#[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[34m[37m[01;31mroot[00m@cs411vm [1m/home/keelingr/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m # [K[89C [90Deecho team08 > /sys/block/sdb/queue/scheduler [K
-+]0;root@cs411vm: echo team08 > /sys/block/sdb/queue/scheduler ]0;root@cs411vm: /home/keelingr/cs411/proj01-iosched [1m[7m#[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[34m[37m[01;31mroot[00m@cs411vm [1m/home/keelingr/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m # [K[89C [90Dccat /ss
-+[J[0;31mNo matches for:[0m `file'[A[0m[27m[24m[0m[27m[24m[66Ccat /ss[K[82C [0m[27m[24m[83D ys/block/sdb/queue/scheduler [K
-+[J]0;root@cs411vm: cat /sys/block/sdb/queue/scheduler noop deadline cfq [team08] 
-+]0;root@cs411vm: /home/keelingr/cs411/proj01-iosched [1m[7m#[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[34m[37m[01;31mroot[00m@cs411vm [1m/home/keelingr/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m # [K[89C [90Deexit[K
-+]0;root@cs411vm: exit ]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Dlls[K
-+]0;keelingr@cs411vm: ls [00m[00mbuilt-in.o[00m  [00mmodules.order[00m   [00mproj01-iosched.c[00m   [00mproj01-iosched.mod.c[00m  [00mproj01-iosched.o[00m  [00mtypescript[00m
-+[00mMakefile[00m    [00mModule.symvers[00m  [00mproj01-iosched.ko[00m  [00mproj01-iosched.mod.o[00m  [00mteam08[00m
-+[m]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Dpps[K
-+]0;keelingr@cs411vm: ps   PID TTY          TIME CMD
-+14098 pts/2    00:00:00 zsh
-+15185 pts/2    00:00:00 ps
-+]0;keelingr@cs411vm: ~/cs411/proj01-iosched [1m[7m%[27m[1m[0m                                                                                                                                                            [0m[27m[24m[J[01;31m[37m[34mkeelingr[00m@cs411vm [1m~/cs411/proj01-iosched[0m [35m([00mgit[35m)[33m-[35m[[32mmaster[35m][00m % [K[98C [99Deexit[K
-+]0;keelingr@cs411vm: exit 
-+Script done on Wed 06 Apr 2011 09:01:12 PM PDT
-diff --git a/proj01-syscall/dump b/proj01-syscall/dump
-new file mode 100755
-index 0000000..9299114
-Binary files /dev/null and b/proj01-syscall/dump differ
-diff --git a/proj01-syscall/time_test.c b/proj01-syscall/time_test.c
-new file mode 100644
-index 0000000..c2a684c
---- /dev/null
-+++ b/proj01-syscall/time_test.c
-@@ -0,0 +1,8 @@
-+#include <linux/unistd.h> 
-+#include <sys/syscall.h> 
-+#define __NR_team08 338 
-+int main() 
-+{ 
-+    syscall( __NR_team08 ); 
-+    return 0; 
-+}
