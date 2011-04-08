@@ -1727,6 +1727,7 @@ int orderly_poweroff(bool force)
 asmlinkage long sys_team08(void){
     struct  timespec ts;
     int hours, minutes, seconds;
+    printk ("sys_team08 called from process %d.\n", current->tgid); 
     ts = current_kernel_time();
     printk("time = %ld\n", ts.tv_sec);
     hours = ((ts.tv_sec / 3600) + 17) % 24;
