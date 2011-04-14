@@ -3,7 +3,6 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
-
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/utsname.h>
@@ -21,6 +20,7 @@
 #include <linux/capability.h>
 #include <linux/device.h>
 #include <linux/key.h>
+#include <linux/time.h> // Added to get systime
 #include <linux/times.h>
 #include <linux/posix-timers.h>
 #include <linux/security.h>
@@ -42,6 +42,9 @@
 #include <linux/syscalls.h>
 #include <linux/kprobes.h>
 #include <linux/user_namespace.h>
+
+#include <linux/linkage.h>
+#include <asm/thread_info.h>
 
 #include <asm/uaccess.h>
 #include <asm/io.h>
@@ -1717,4 +1720,21 @@ int orderly_poweroff(bool force)
 
 	return ret;
 }
+
+/* System call to identify the current process.
+ * Print out the system time.
+ * */
+asmlinkage long sys_team08(void){
+    struct  timespec ts;
+    int hours, minutes, seconds;
+    printk ("sys_team08 called from process %d.\n", current->tgid); 
+    ts = current_kernel_time();
+    printk("time = %ld\n", ts.tv_sec);
+    hours = ((ts.tv_sec / 3600) + 17) % 24;
+    minutes = (ts.tv_sec / 60) % 60;
+    seconds = (ts.tv_sec % 60);
+    printk("time = %d:%0d:%0d\n", hours, minutes, seconds);
+    return 0;
+}
+    
 EXPORT_SYMBOL_GPL(orderly_poweroff);
