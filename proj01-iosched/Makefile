@@ -1,4 +1,4 @@
-obj-m   := test-iosched.o
+obj-m   := proj01-iosched.o
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 PWD       := $(shell pwd)
