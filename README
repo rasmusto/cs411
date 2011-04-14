@@ -1,9 +1,0 @@
-To connect to the virtual machine:
-ssh <engr_username>@flip.engr.oregonstate.edu
-ssh -p 818 <engr_username OR root>@sonic-1.eecs.oregonstate.edu
-
-To replay a timed script:
-replayscript timingfile
-
-For a non-timed script:
-cat typescript

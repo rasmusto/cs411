@@ -1,1 +1,0 @@
-cmd_/home/keelingr/cs411/proj01-iosched/proj01-iosched.ko := ld -r -m elf_i386 -T /home/rasmusto/cs411/linux-2.6.34.7/scripts/module-common.lds --build-id -o /home/keelingr/cs411/proj01-iosched/proj01-iosched.ko /home/keelingr/cs411/proj01-iosched/proj01-iosched.o /home/keelingr/cs411/proj01-iosched/proj01-iosched.mod.o
