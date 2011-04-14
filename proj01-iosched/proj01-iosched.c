@@ -29,7 +29,7 @@ static void proj01_merged_requests(struct request_queue *q, struct request *rq,
 
 static int proj01_dispatch(struct request_queue *q, int force)
 {
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct proj01_data *nd = q->elevator->elevator_data;
 
 	if (!list_empty(&nd->queue)) {
 		struct request *rq;
@@ -43,14 +43,14 @@ static int proj01_dispatch(struct request_queue *q, int force)
 
 static void proj01_add_request(struct request_queue *q, struct request *rq)
 {
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct proj01_data *nd = q->elevator->elevator_data;
 
 	list_add_tail(&rq->queuelist, &nd->queue);
 }
 
 static int proj01_queue_empty(struct request_queue *q)
 {
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct proj01_data *nd = q->elevator->elevator_data;
 
 	return list_empty(&nd->queue);
 }
@@ -58,7 +58,7 @@ static int proj01_queue_empty(struct request_queue *q)
 static struct request *
 proj01_former_request(struct request_queue *q, struct request *rq)
 {
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct proj01_data *nd = q->elevator->elevator_data;
 
 	if (rq->queuelist.prev == &nd->queue)
 		return NULL;
@@ -68,7 +68,7 @@ proj01_former_request(struct request_queue *q, struct request *rq)
 static struct request *
 proj01_latter_request(struct request_queue *q, struct request *rq)
 {
-	struct noop_data *nd = q->elevator->elevator_data;
+	struct proj01_data *nd = q->elevator->elevator_data;
 
 	if (rq->queuelist.next == &nd->queue)
 		return NULL;
@@ -77,7 +77,7 @@ proj01_latter_request(struct request_queue *q, struct request *rq)
 
 static void *proj01_init_queue(struct request_queue *q)
 {
-	struct noop_data *nd;
+	struct proj01_data *nd;
 
 	nd = kmalloc_node(sizeof(*nd), GFP_KERNEL, q->node);
 	if (!nd)
@@ -88,13 +88,13 @@ static void *proj01_init_queue(struct request_queue *q)
 
 static void proj01_exit_queue(struct elevator_queue *e)
 {
-	struct noop_data *nd = e->elevator_data;
+	struct proj01_data *nd = e->elevator_data;
 
 	BUG_ON(!list_empty(&nd->queue));
 	kfree(nd);
 }
 
-static struct elevator_type elevator_noop = {
+static struct elevator_type elevator_proj01 = {
 	.ops = {
 		.elevator_merge_req_fn		= proj01_merged_requests,
 		.elevator_dispatch_fn		= proj01_dispatch,
@@ -111,18 +111,18 @@ static struct elevator_type elevator_noop = {
 
 static int __init proj01_init(void)
 {
-	elv_register(&elevator_noop);
+	elv_register(&elevator_proj01);
 
 	return 0;
 }
 
 static void __exit proj01_exit(void)
 {
-	elv_unregister(&elevator_noop);
+	elv_unregister(&elevator_proj01);
 }
 
-module_init(noop_init);
-module_exit(noop_exit);
+module_init(proj01_init);
+module_exit(proj01_exit);
 
 
 MODULE_AUTHOR("Jacob Cray, Rodney Keeling, Torben Rasmussen, Helen Shin");
