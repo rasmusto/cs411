@@ -1,5 +1,7 @@
 Plan of Attack
 
-In slob.c, the *slob_alloc() function utilizes the first-fit algorithm; however, to reduce fragmentation, we can implement the best-fit algorithm with minor changes to slob.c. We can write a function that iterates through the available space to check for the smallest possible fit that is greater-than or equal-to the size of the needed allocation. Once an available location is found, that position—assuming it's large enough for the necessary allocation—is allocated and
-the process is complete. We can make this even more efficient by selecting the first location that is equal to the size requested if one exists. The changes to the function should be fairly minor once we wrap our heads around the coding style. 
-
+In slob.c, the *slob_alloc() function utilizes the first-fit algorithm; however, to reduce fragmentation, we can implement the best-fit algorithm with minor changes to slob.c.
+We can write a function that iterates through the available space to check for the smallest possible fit that is greater-than or equal-to the size of the needed allocation. 
+Once an available location is found, that position—assuming it's large enough for the necessary allocation—is allocated and the process is complete. 
+We can make this even more efficient by selecting the first location that is equal to the size requested if one exists.
+The changes to the function should be fairly minor once we wrap our heads around the coding style. 
