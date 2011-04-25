@@ -76,3 +76,6 @@ GTAGS
 *.orig
 *~
 \#*#
+
+# cs411 stuff
+!.config
