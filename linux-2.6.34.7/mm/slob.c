@@ -338,10 +338,6 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 
 	/* Iterate through each partially free page, try to find room */
 	list_for_each_entry(sp, slob_list, list) {
-        if (first_check == 0){
-            smallest = sp;
-        }
-        first_check++;
 #ifdef CONFIG_NUMA
 		/*
 		 * If there's a node specification, search for a partial
@@ -354,7 +350,12 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
         if (sp->units < SLOB_UNITS(size))
             continue;
         
-        /* Find smallest hole */
+        /* Find first hole in memory that is large enough */
+        /* Unsure if continue statements are needed */
+        if ((sp->units > SLOB_UNITS(size)) && ( first_check == 0 ) ){
+            smallest = sp;
+            first_check++;
+        }
         if ((sp->units > SLOB_UNITS(size)) && (sp->units < smallest->units) ){
             smallest = sp;
         }
@@ -369,6 +370,7 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
         /* Improve fragment distribution and reduce our average
 		 * search time by starting our next search here. (see
 		 * Knuth vol 1, sec 2.5, pg 449) */
+        /* This may need to be moved out of the for loop after the allocation, or removed all together */
 		if (prev != slob_list->prev &&
 				slob_list->next != prev->next)
 			list_move_tail(slob_list, prev->next);
