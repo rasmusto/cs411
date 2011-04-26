@@ -324,6 +324,7 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 	struct list_head *slob_list;
 	slob_t *b = NULL;
 	unsigned long flags;
+    int first_check = 0;
 
 	if (size < SLOB_BREAK1)
 		slob_list = &free_slob_small;
@@ -333,8 +334,14 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 		slob_list = &free_slob_large;
 
 	spin_lock_irqsave(&slob_lock, flags);
+
+
 	/* Iterate through each partially free page, try to find room */
 	list_for_each_entry(sp, slob_list, list) {
+        if (first_check == 0){
+            smallest = sp;
+        }
+        first_check++;
 #ifdef CONFIG_NUMA
 		/*
 		 * If there's a node specification, search for a partial
