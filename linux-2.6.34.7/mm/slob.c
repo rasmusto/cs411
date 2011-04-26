@@ -89,7 +89,7 @@ typedef s32 slobidx_t;
 #endif
 
 struct slob_block {
-	slobidx_t units;
+	slobidx_t units;    /* free units left in block? */
 };
 typedef struct slob_block slob_t;
 
@@ -398,6 +398,7 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 	}
 	if (unlikely((gfp & __GFP_ZERO) && b))
 		memset(b, 0, size);
+    printk("returning b = %d\n", b);
 	return b;
 }
 
