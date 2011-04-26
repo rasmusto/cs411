@@ -131,6 +131,7 @@ static inline void free_slob_page(struct slob_page *sp)
 static LIST_HEAD(free_slob_small);
 static LIST_HEAD(free_slob_medium);
 static LIST_HEAD(free_slob_large);
+static long long total_mem = 0;
 
 /*
  * is_slob_page: True for all slob pages (false for bigblock pages)
@@ -371,34 +372,26 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
         /* CS411
          * We need to add something here that keeps track of
          * small memory allocations */
-
-        printk("sp: %d\n", sp);
+        total_mem += size;
 
 		b = slob_new_pages(gfp & ~__GFP_ZERO, 0, node);
-		printk("b = slob_new_pages(gfp & ~__GFP_ZERO, 0, node);\n\tb = %d\n", b);
 		if (!b)
 			return NULL;
 		sp = slob_page(b);
-		printk("sp = slob_page(b);\n\tsp->units = %d\n", sp->units);
-		printk("sp = slob_page(b);\n\tsp->free = %d\n", sp->free);
 		set_slob_page(sp);
 
 		spin_lock_irqsave(&slob_lock, flags);
 		sp->units = SLOB_UNITS(PAGE_SIZE);
 		sp->free = b;
-		printk("sp->units = SLOB_UNITS(PAGE_SIZE);\n\tsp->units = %d\n", sp->units);
-		printk("sp->free = b;\n\tsp->free = %d\n", sp->free);
 		INIT_LIST_HEAD(&sp->list);
 		set_slob(b, SLOB_UNITS(PAGE_SIZE), b + SLOB_UNITS(PAGE_SIZE));
 		set_slob_page_free(sp, slob_list);
 		b = slob_page_alloc(sp, size, align);
-		printk("b = slob_page_alloc(sp, size, align);\n\tb = %d\n", b);
 		BUG_ON(!b);
 		spin_unlock_irqrestore(&slob_lock, flags);
 	}
 	if (unlikely((gfp & __GFP_ZERO) && b))
 		memset(b, 0, size);
-    printk("returning b = %d\n", b);
 	return b;
 }
 
@@ -717,6 +710,7 @@ void __init kmem_cache_init_late(void)
 
 unsigned int sys_get_slob_amt_claimed(void)
 {
+    printk("total_mem = %lld\n", total_mem);
     return 0;
 }
 
