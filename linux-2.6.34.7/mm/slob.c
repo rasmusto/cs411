@@ -71,8 +71,8 @@
 #include <asm/atomic.h>
 
 /* CS411 stuff */
-unsigned int sys_get_slob_amt_claimed(void);
-unsigned int sys_get_slob_amt_free(void);
+long sys_get_slob_amt_claimed(void);
+long sys_get_slob_amt_free(void);
 
 /*
  * slob_block has a field 'units', which indicates size of block if +ve,
@@ -708,13 +708,13 @@ void __init kmem_cache_init_late(void)
 	/* Nothing to do */
 }
 
-unsigned int sys_get_slob_amt_claimed(void)
+long sys_get_slob_amt_claimed(void)
 {
     printk("total_mem = %lld\n", total_mem);
     return 0;
 }
 
-unsigned int sys_get_slob_amt_free(void)
+long sys_get_slob_amt_free(void)
 {
     return 0;
 }
