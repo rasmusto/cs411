@@ -132,6 +132,7 @@ static LIST_HEAD(free_slob_small);
 static LIST_HEAD(free_slob_medium);
 static LIST_HEAD(free_slob_large);
 static long long total_mem = 0;
+static long long free_mem = 0;
 
 /*
  * is_slob_page: True for all slob pages (false for bigblock pages)
@@ -372,7 +373,9 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
         /* CS411
          * We need to add something here that keeps track of
          * small memory allocations */
-        total_mem += size;
+        //total_mem += size;
+        total_mem += PAGE_SIZE;
+        free_mem += PAGE_SIZE - size;
 
 		b = slob_new_pages(gfp & ~__GFP_ZERO, 0, node);
 		if (!b)
@@ -716,5 +719,6 @@ long sys_get_slob_amt_claimed(void)
 
 long sys_get_slob_amt_free(void)
 {
+    printk("free_mem = %lld\n", free_mem);
     return 0;
 }
