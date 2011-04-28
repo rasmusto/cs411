@@ -355,9 +355,11 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
         if ((sp->units > SLOB_UNITS(size)) && ( first_check == 0 ) ){
             smallest = sp;
             first_check++;
+            continue;
         }
         if ((sp->units > SLOB_UNITS(size)) && (sp->units < smallest->units) ){
             smallest = sp;
+            continue;
         }
 
         /* Attempt to alloc iff it is an exact match otherwise continue through loop to find smallest */
