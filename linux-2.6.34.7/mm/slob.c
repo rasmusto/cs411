@@ -131,8 +131,8 @@ static inline void free_slob_page(struct slob_page *sp)
 static LIST_HEAD(free_slob_small);
 static LIST_HEAD(free_slob_medium);
 static LIST_HEAD(free_slob_large);
-static long long total_mem = 0;
-static long long free_mem = 0;
+static long total_mem = 0;
+static long free_mem = 0;
 
 /*
  * is_slob_page: True for all slob pages (false for bigblock pages)
@@ -713,12 +713,12 @@ void __init kmem_cache_init_late(void)
 
 long sys_get_slob_amt_claimed(void)
 {
-    printk("total_mem = %lld\n", total_mem);
-    return 0;
+    printk("total_mem = %ld\n", total_mem);
+    return total_mem;
 }
 
 long sys_get_slob_amt_free(void)
 {
-    printk("free_mem = %lld\n", free_mem);
-    return 0;
+    printk("free_mem = %ld\n", free_mem);
+    return free_mem;
 }
