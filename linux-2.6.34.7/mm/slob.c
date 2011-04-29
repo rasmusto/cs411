@@ -89,7 +89,7 @@ typedef s32 slobidx_t;
 #endif
 
 struct slob_block {
-	slobidx_t units;    /* free units left in block? */
+	slobidx_t units;
 };
 typedef struct slob_block slob_t;
 
@@ -325,12 +325,10 @@ static void *slob_page_alloc(struct slob_page *sp, size_t size, int align)
 static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 {
 	struct slob_page *sp;
-    struct slob_page *smallest = NULL;
 	struct list_head *prev;
 	struct list_head *slob_list;
 	slob_t *b = NULL;
 	unsigned long flags;
-    char first_check = 0;
 
 	if (size < SLOB_BREAK1)
 		slob_list = &free_slob_small;
@@ -340,8 +338,6 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 		slob_list = &free_slob_large;
 
 	spin_lock_irqsave(&slob_lock, flags);
-
-
 	/* Iterate through each partially free page, try to find room */
 	list_for_each_entry(sp, slob_list, list) {
 #ifdef CONFIG_NUMA
@@ -374,13 +370,6 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 
 	/* Not enough space: must allocate a new page */
 	if (!b) {
-        /* CS411
-         * We need to add something here that keeps track of
-         * small memory allocations */
-        //total_mem += size;
-        total_mem += PAGE_SIZE;
-        free_mem += PAGE_SIZE - size;
-
 		b = slob_new_pages(gfp & ~__GFP_ZERO, 0, node);
 		if (!b)
 			return NULL;
