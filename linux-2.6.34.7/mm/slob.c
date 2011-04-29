@@ -380,22 +380,28 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 
 	/* Not enough space: must allocate a new page */
 	if (!b) {
-		b = slob_new_pages(gfp & ~__GFP_ZERO, 0, node);
-		if (!b)
-			return NULL;
-		sp = slob_page(b);
-		set_slob_page(sp);
+        /* CS411
+         * We need to add something here that keeps track of
+         * small memory allocations */
+        total_mem += PAGE_SIZE;
+        free_mem += PAGE_SIZE - size;
 
-		spin_lock_irqsave(&slob_lock, flags);
-		sp->units = SLOB_UNITS(PAGE_SIZE);
-		sp->free = b;
-		INIT_LIST_HEAD(&sp->list);
-		set_slob(b, SLOB_UNITS(PAGE_SIZE), b + SLOB_UNITS(PAGE_SIZE));
-		set_slob_page_free(sp, slob_list);
-		b = slob_page_alloc(sp, size, align);
-		BUG_ON(!b);
-		spin_unlock_irqrestore(&slob_lock, flags);
-	}
+        b = slob_new_pages(gfp & ~__GFP_ZERO, 0, node);
+        if (!b)
+            return NULL;
+        sp = slob_page(b);
+        set_slob_page(sp);
+
+        spin_lock_irqsave(&slob_lock, flags);
+        sp->units = SLOB_UNITS(PAGE_SIZE);
+        sp->free = b;
+        INIT_LIST_HEAD(&sp->list);
+        set_slob(b, SLOB_UNITS(PAGE_SIZE), b + SLOB_UNITS(PAGE_SIZE));
+        set_slob_page_free(sp, slob_list);
+        b = slob_page_alloc(sp, size, align);
+        BUG_ON(!b);
+        spin_unlock_irqrestore(&slob_lock, flags);
+    }
 	if (unlikely((gfp & __GFP_ZERO) && b))
 		memset(b, 0, size);
 	return b;
