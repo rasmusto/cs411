@@ -352,44 +352,24 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 		if (node != -1 && page_to_nid(&sp->page) != node)
 			continue;
 #endif
-        /* Enough room on this page? */
-        if (sp->units < SLOB_UNITS(size))
-            continue;
-        
-        /* Find first hole in memory that is large enough */
-        /* Unsure if continue statements are needed */
-        if ((sp->units > SLOB_UNITS(size)) && ( first_check == 0 ) ){
-            smallest = sp;
-            first_check = 1;
-            continue;
-        }
-        if ((sp->units > SLOB_UNITS(size)) && (sp->units < smallest->units) ){
-            smallest = sp;
-            continue;
-        }
+		/* Enough room on this page? */
+		if (sp->units < SLOB_UNITS(size))
+			continue;
 
-        /* Attempt to alloc iff it is an exact match otherwise continue through loop to find smallest */
-        if (sp->units == SLOB_UNITS(size)){
-            prev = sp->list.prev;
-            b = slob_page_alloc(sp, size, align);
-            if (!b)
-                continue;
-        }
-        /* Improve fragment distribution and reduce our average
+		/* Attempt to alloc */
+		prev = sp->list.prev;
+		b = slob_page_alloc(sp, size, align);
+		if (!b)
+			continue;
+
+		/* Improve fragment distribution and reduce our average
 		 * search time by starting our next search here. (see
 		 * Knuth vol 1, sec 2.5, pg 449) */
-        /* This may need to be moved out of the for loop after the allocation, or removed all together */
 		if (prev != slob_list->prev &&
 				slob_list->next != prev->next)
 			list_move_tail(slob_list, prev->next);
 		break;
 	}
-    /*Want to allocate at the location w/ the closest fit for our request */
-    if (smallest){
-        prev = smallest->list.prev;
-        b = slob_page_alloc(smallest, size, align);
-    }
-
 	spin_unlock_irqrestore(&slob_lock, flags);
 
 	/* Not enough space: must allocate a new page */
