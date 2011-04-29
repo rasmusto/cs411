@@ -43,9 +43,13 @@
 #include <linux/kprobes.h>
 #include <linux/user_namespace.h>
 
+#include <linux/linkage.h>
+
 #include <asm/uaccess.h>
 #include <asm/io.h>
 #include <asm/unistd.h>
+
+#include <asm/thread_info.h>
 
 #ifndef SET_UNALIGN_CTL
 # define SET_UNALIGN_CTL(a,b)	(-EINVAL)

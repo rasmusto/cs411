@@ -70,6 +70,10 @@
 #include <linux/kmemleak.h>
 #include <asm/atomic.h>
 
+/* CS411 stuff */
+long sys_get_slob_amt_claimed(void);
+long sys_get_slob_amt_free(void);
+
 /*
  * slob_block has a field 'units', which indicates size of block if +ve,
  * or offset of next block if -ve (in SLOB_UNITs).
@@ -85,7 +89,7 @@ typedef s32 slobidx_t;
 #endif
 
 struct slob_block {
-	slobidx_t units;
+	slobidx_t units;    /* free units left in block? */
 };
 typedef struct slob_block slob_t;
 
@@ -127,6 +131,8 @@ static inline void free_slob_page(struct slob_page *sp)
 static LIST_HEAD(free_slob_small);
 static LIST_HEAD(free_slob_medium);
 static LIST_HEAD(free_slob_large);
+static long total_mem = 0;
+static long free_mem = 0;
 
 /*
  * is_slob_page: True for all slob pages (false for bigblock pages)
@@ -388,6 +394,13 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 
 	/* Not enough space: must allocate a new page */
 	if (!b) {
+        /* CS411
+         * We need to add something here that keeps track of
+         * small memory allocations */
+        //total_mem += size;
+        total_mem += PAGE_SIZE;
+        free_mem += PAGE_SIZE - size;
+
 		b = slob_new_pages(gfp & ~__GFP_ZERO, 0, node);
 		if (!b)
 			return NULL;
@@ -720,4 +733,16 @@ void __init kmem_cache_init(void)
 void __init kmem_cache_init_late(void)
 {
 	/* Nothing to do */
+}
+
+long sys_get_slob_amt_claimed(void)
+{
+    printk("total_mem = %ld\n", total_mem);
+    return total_mem;
+}
+
+long sys_get_slob_amt_free(void)
+{
+    printk("free_mem = %ld\n", free_mem);
+    return free_mem;
 }
