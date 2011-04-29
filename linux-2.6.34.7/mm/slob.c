@@ -406,6 +406,11 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 static void best_fit_slob(struct * slob, size_t size)
 {
 	list_for_each_entry(sp, slob_list, list) {
+        /* USE THESE */
+        //slob_page_alloc
+        //set_slob
+        //slob_next
+        //slob_last
         //Is the page itself big enough?
         if(sp->units < SLOB_UNITS(size))
             continue;
