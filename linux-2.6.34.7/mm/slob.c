@@ -330,7 +330,7 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 	struct list_head *slob_list;
 	slob_t *b = NULL;
 	unsigned long flags;
-    int first_check = 0;
+    char first_check = 0;
 
 	if (size < SLOB_BREAK1)
 		slob_list = &free_slob_small;
@@ -360,7 +360,7 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
         /* Unsure if continue statements are needed */
         if ((sp->units > SLOB_UNITS(size)) && ( first_check == 0 ) ){
             smallest = sp;
-            first_check++;
+            first_check = 1;
             continue;
         }
         if ((sp->units > SLOB_UNITS(size)) && (sp->units < smallest->units) ){
