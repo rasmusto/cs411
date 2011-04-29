@@ -71,6 +71,15 @@
 #include <asm/atomic.h>
 
 /* CS411 stuff */
+static void best_fit_slob(struct slob);
+
+struct slob{ 
+    struct slob_page  * sp;
+    struct slob_block * curr;
+    struct slob_block * prev;
+}
+
+struct slob * best_slob;
 long sys_get_slob_amt_claimed(void);
 long sys_get_slob_amt_free(void);
 
@@ -319,6 +328,7 @@ static void *slob_page_alloc(struct slob_page *sp, size_t size, int align)
 	}
 }
 
+
 /*
  * slob_alloc: entry point into the slob allocator.
  */
@@ -389,6 +399,13 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 	if (unlikely((gfp & __GFP_ZERO) && b))
 		memset(b, 0, size);
 	return b;
+}
+
+/* CS411 */
+
+static void best_fit_slob(struct slob, size_t size)
+{
+
 }
 
 /*
