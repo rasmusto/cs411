@@ -325,7 +325,7 @@ static void *slob_page_alloc(struct slob_page *sp, size_t size, int align)
 static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 {
 	struct slob_page *sp;
-    struct slob_page *smallest; //
+    struct slob_page *smallest = NULL;
 	struct list_head *prev;
 	struct list_head *slob_list;
 	slob_t *b = NULL;
