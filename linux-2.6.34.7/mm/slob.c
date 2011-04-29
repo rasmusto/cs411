@@ -74,9 +74,9 @@
 static void best_fit_slob(struct slob);
 
 struct slob{ 
-    struct slob_page  * sp;
-    struct slob_block * curr;
+    struct slob_block * b;
     struct slob_block * prev;
+    struct slob_page  * sp;
 }
 
 struct slob * best_slob;
@@ -422,16 +422,23 @@ static void best_fit_slob(struct * slob, size_t size)
         do {
             if (slob_units(b) < SLOB_UNITS(size)){
                 prev = b;
-                set_slob(b, units, STUFF);
+                b = slob_next(b);
+            }
+            else{
+                //check if b is the best match
+                if (slob_units(b) < slob_units(best_slob->curr)){
+                    best_slob->sp = sp;
+                    best_slob->b->units = b;
+                    best_slob->prev->units = prev;
+                }
             }
         }
         while (!slob_last(b));
+        //set_slob(b, units, STUFF);
 
         //check if curr is the best match
         if (slob_units(best_slob->curr) < slob_units(curr)){ 
             //Update struct with smallest usable block and its previous
-            best_slob->curr = curr;
-            best_slob->prev = prev;
         }
         //If yes, save address of page (update struct)
         best_slob->sp = sp;
