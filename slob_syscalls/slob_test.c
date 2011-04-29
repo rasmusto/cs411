@@ -8,21 +8,27 @@
 
 int main() 
 { 
-    printf("Checking current memory usage...\n");
+    printf("\n");
+    printf("Checking current memory usage... ");
     syscall( __NR_get_slob_amt_claimed );
     syscall( __NR_get_slob_amt_free );
-    printf("Done checking current memory usage!\n");
+    printf("Done!\n");
+    printf("\n");
+    system("dmesg | tail --lines=2");
+    printf("\n");
 
-    printf("Running command...\n");
-    system("cat /proc/cpuinfo| grep [0-9] | sort | tr cpu ppu");
-    printf("Done running command!\n");
+    printf("Running command... ");
+    system("cat /proc/cpuinfo| grep [0-9] | sort | tr cpu ppu >> /dev/null");
+    printf("Done!\n");
+    printf("\n");
 
-    printf("Checking new memory usage...\n");
+    printf("Checking new memory usage... ");
     syscall( __NR_get_slob_amt_claimed );
     syscall( __NR_get_slob_amt_free );
-    printf("Done checking new memory usage!\n");
-
-    system("dmesg | tail --lines=4");
+    printf("Done!\n");
+    printf("\n");
+    system("dmesg | tail --lines=2");
+    printf("\n");
 
     return 0; 
 }
