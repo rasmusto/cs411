@@ -406,7 +406,8 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 static void best_fit_slob(struct * slob, size_t size)
 {
     struct slob_page *sp;
-    slob_t b = NULL;
+    slob_t *    b = NULL;
+    slob_t * prev = NULL;
 
     list_for_each_entry(sp, slob_list, list) {
         /* USE THESE */
@@ -424,24 +425,20 @@ static void best_fit_slob(struct * slob, size_t size)
                 prev = b;
                 b = slob_next(b);
             }
-            else{
-                //check if b is the best match
-                if (slob_units(b) < slob_units(best_slob->curr)){
+            else{ 
+                /* if the block is big enough
+                 * check if b is the best match
+                 */
+                if (best_slob->b = NULL || 
+                        slob_units(b) < slob_units(best_slob->b)){
+                    best_slob->b = b;
+                    //set_slob(best_slob->b = b->units, slob_next(b));
+                    best_slob->prev = prev;
                     best_slob->sp = sp;
-                    best_slob->b->units = b;
-                    best_slob->prev->units = prev;
                 }
             }
         }
         while (!slob_last(b));
-        //set_slob(b, units, STUFF);
-
-        //check if curr is the best match
-        if (slob_units(best_slob->curr) < slob_units(curr)){ 
-            //Update struct with smallest usable block and its previous
-        }
-        //If yes, save address of page (update struct)
-        best_slob->sp = sp;
     }
     //align?
 }
