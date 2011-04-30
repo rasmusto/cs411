@@ -1,4 +1,20 @@
 /*
+ *  Team 08
+ *  Jake Cray, Rodney Keeling, Torben Rasmussen, Helen Shin
+ *  CS411 Project 02
+ *  CHANGES:
+ *      Added struct slob
+ *      Added function best_fit_slob()
+ *          -makes necessary changes from first-fit
+ *           to best-fit.
+ *      Removed first-fit code that inhibited best-fit code
+ *      Added system calls to test best-fit functionality
+ *          -sys_get_slob_amt_claimed()
+ *          -sys_get_slob_amt_claimed()
+ *      Added code to keep track of var size (for syscall use)
+ */
+
+/*
  * SLOB Allocator: Simple List Of Blocks
  *
  * Matt Mackall <mpm@selenic.com> 12/30/03
