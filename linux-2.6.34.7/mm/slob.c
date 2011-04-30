@@ -368,7 +368,6 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 
     /* OUR FUNCTION CALL */
     best_fit_slob(size, slob_list);
-
     b = slob_page_alloc(sp, size, align);
 
 	spin_unlock_irqrestore(&slob_lock, flags);
