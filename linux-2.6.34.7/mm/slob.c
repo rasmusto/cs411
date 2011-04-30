@@ -86,14 +86,15 @@
 #include <linux/kmemleak.h>
 #include <asm/atomic.h>
 
-/* CS411 stuff */
-static void best_fit_slob(struct slob);
 
+/* CS411 stuff */
 struct slob{ 
     struct slob_block * b;
     struct slob_block * prev;
     struct slob_page  * sp;
-}
+};
+
+static void best_fit_slob(struct slob);
 
 struct slob * best_slob;
 long sys_get_slob_amt_claimed(void);
@@ -366,7 +367,7 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 	spin_lock_irqsave(&slob_lock, flags);
 
     /* OUR FUNCTION CALL */
-    best_fit_slob(struct * slob, size_t size, slob_list);
+    best_fit_slob(slob, size, slob_list);
 
     b = slob_page_alloc(sp, size, align);
 
@@ -403,7 +404,7 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 
 /* CS411 */
 
-static void best_fit_slob(struct * slob, size_t size, list_head * slob_list)
+static void best_fit_slob(struct * slob, size_t size, struct list_head * slob_list)
 {
     struct slob_page *sp;
     slob_t *    b = NULL;
