@@ -368,7 +368,6 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 
     /* OUR FUNCTION CALL */
     best_fit_slob(size, slob_list);
-    b = slob_page_alloc(sp, size, align);
 
 	spin_unlock_irqrestore(&slob_lock, flags);
 
@@ -429,8 +428,7 @@ static void best_fit_slob(size_t size, struct list_head * slob_list)
                 /* if the block is big enough
                  * check if b is the best match
                  */
-                if (best_slob->b = NULL || 
-                        slob_units(b) < slob_units(best_slob->b)){
+                if (best_slob->b == NULL || (slob_units(b) < slob_units(best_slob->b))){
                     best_slob->b = b;
                     //set_slob(best_slob->b = b->units, slob_next(b));
                     best_slob->prev = prev;
@@ -440,6 +438,7 @@ static void best_fit_slob(size_t size, struct list_head * slob_list)
         }
         while (!slob_last(b));
     }
+    b = slob_page_alloc(sp, size, align);
     //align?
 }
 
