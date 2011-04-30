@@ -421,7 +421,7 @@ static void best_fit_slob(size_t size, struct list_head * slob_list, int align)
         //check each slob block within the page
         do {
             if (slob_units(b) < SLOB_UNITS(size)){
-                prev = b;
+                //prev = b;
                 b = slob_next(b);
             }
             else{ 
@@ -431,13 +431,14 @@ static void best_fit_slob(size_t size, struct list_head * slob_list, int align)
                 if (best_slob->b == NULL || (slob_units(b) < slob_units(best_slob->b))){
                     best_slob->b = b;
                     //set_slob(best_slob->b = b->units, slob_next(b));
-                    best_slob->prev = prev;
+                    //best_slob->prev = prev;
                     best_slob->sp = sp;
                 }
             }
         }
         while (!slob_last(b));
     }
+    //b = slob_page_alloc(best_slob->sp,
     b = slob_page_alloc(sp, size, align);
     //align?
 }
