@@ -1,2 +1,22 @@
-testing commit on new branch proj02
-torben is testing too
+#
+# Modified slob.c
+#
+# slob.c, by default, implements the first-fit algorithm for 
+# memory allocation. This modified slob.c alters the current 
+# first-fit algorithm to use the more efficient best-fit algorithm.
+#
+# Example case:
+#
+# First-fit algorithm (for example process):
+#       memory_claimed: XXX
+#       memory_free:    XXX
+# Best-fit algorithm (for same example process);
+#       memory_claimed: XXX
+#       memory_free:    XXX
+#
+#
+# As shown, the best-fit algorithm performs more efficiently 
+# for this example. Here, efficiency is a measurement of fragmentation
+# and NOT time. Depending on the nature of the system, best-fit may 
+# perform much more efficiently or much less efficiently.
+#

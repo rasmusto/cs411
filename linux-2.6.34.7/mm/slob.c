@@ -90,9 +90,9 @@
 static void best_fit_slob(struct slob);
 
 struct slob{ 
-    struct slob_page  * sp;
-    struct slob_block * curr;
+    struct slob_block * b;
     struct slob_block * prev;
+    struct slob_page  * sp;
 }
 
 struct slob * best_slob;
@@ -396,22 +396,28 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 
 	/* Not enough space: must allocate a new page */
 	if (!b) {
-		b = slob_new_pages(gfp & ~__GFP_ZERO, 0, node);
-		if (!b)
-			return NULL;
-		sp = slob_page(b);
-		set_slob_page(sp);
+        /* CS411
+         * We need to add something here that keeps track of
+         * small memory allocations */
+        total_mem += PAGE_SIZE;
+        free_mem += PAGE_SIZE - size;
 
-		spin_lock_irqsave(&slob_lock, flags);
-		sp->units = SLOB_UNITS(PAGE_SIZE);
-		sp->free = b;
-		INIT_LIST_HEAD(&sp->list);
-		set_slob(b, SLOB_UNITS(PAGE_SIZE), b + SLOB_UNITS(PAGE_SIZE));
-		set_slob_page_free(sp, slob_list);
-		b = slob_page_alloc(sp, size, align);
-		BUG_ON(!b);
-		spin_unlock_irqrestore(&slob_lock, flags);
-	}
+        b = slob_new_pages(gfp & ~__GFP_ZERO, 0, node);
+        if (!b)
+            return NULL;
+        sp = slob_page(b);
+        set_slob_page(sp);
+
+        spin_lock_irqsave(&slob_lock, flags);
+        sp->units = SLOB_UNITS(PAGE_SIZE);
+        sp->free = b;
+        INIT_LIST_HEAD(&sp->list);
+        set_slob(b, SLOB_UNITS(PAGE_SIZE), b + SLOB_UNITS(PAGE_SIZE));
+        set_slob_page_free(sp, slob_list);
+        b = slob_page_alloc(sp, size, align);
+        BUG_ON(!b);
+        spin_unlock_irqrestore(&slob_lock, flags);
+    }
 	if (unlikely((gfp & __GFP_ZERO) && b))
 		memset(b, 0, size);
 	return b;
@@ -422,7 +428,8 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 static void best_fit_slob(struct * slob, size_t size)
 {
     struct slob_page *sp;
-    slob_t b = NULL;
+    slob_t *    b = NULL;
+    slob_t * prev = NULL;
 
     list_for_each_entry(sp, slob_list, list) {
         /* USE THESE */
@@ -438,19 +445,22 @@ static void best_fit_slob(struct * slob, size_t size)
         do {
             if (slob_units(b) < SLOB_UNITS(size)){
                 prev = b;
-                set_slob(b, units, STUFF);
+                b = slob_next(b);
+            }
+            else{ 
+                /* if the block is big enough
+                 * check if b is the best match
+                 */
+                if (best_slob->b = NULL || 
+                        slob_units(b) < slob_units(best_slob->b)){
+                    best_slob->b = b;
+                    //set_slob(best_slob->b = b->units, slob_next(b));
+                    best_slob->prev = prev;
+                    best_slob->sp = sp;
+                }
             }
         }
         while (!slob_last(b));
-
-        //check if curr is the best match
-        if (slob_units(best_slob->curr) < slob_units(curr)){ 
-            //Update struct with smallest usable block and its previous
-            best_slob->curr = curr;
-            best_slob->prev = prev;
-        }
-        //If yes, save address of page (update struct)
-        best_slob->sp = sp;
     }
     //align?
 }
