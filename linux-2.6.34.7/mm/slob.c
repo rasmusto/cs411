@@ -408,6 +408,10 @@ static void best_fit_slob(size_t size, struct list_head * slob_list, int align)
     slob_t *    b = NULL;
     slob_t * prev = NULL;
 
+    best_slob->b = NULL;
+    best_slob->prev = NULL;
+    best_slob->sp = NULL;
+
     list_for_each_entry(sp, slob_list, list) {
         /* USE THESE */
         //slob_page_alloc
@@ -439,7 +443,7 @@ static void best_fit_slob(size_t size, struct list_head * slob_list, int align)
         while (!slob_last(b));
     }
     //b = slob_page_alloc(best_slob->sp,
-    b = slob_page_alloc(sp, size, align);
+    //b = slob_page_alloc(sp, size, align); /* REMOVED BY TORBEN */
     //align?
 }
 
