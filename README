@@ -8,8 +8,8 @@
 # Example case:
 #
 # First-fit algorithm (for example process):
-#       memory_claimed: XXX
-#       memory_free:    XXX
+#       memory_claimed: 9588736
+#       memory_free:    7308764
 # Best-fit algorithm (for same example process);
 #       memory_claimed: XXX
 #       memory_free:    XXX
@@ -20,16 +20,3 @@
 # and NOT time. Depending on the nature of the system, best-fit may 
 # perform much more efficiently or much less efficiently.
 #
-total_mem = 9588736
-free_mem = 7308764
-total_mem = 9605120
-free_mem = 7322640
-
-Checking current memory usage... Done!
-
-
-Running command... Done!
-
-Checking new memory usage... Done!
-
-
