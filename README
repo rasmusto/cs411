@@ -10,9 +10,11 @@
 # First-fit algorithm (for example process):
 #       memory_claimed: 9588736
 #       memory_free:    7308764
+#       difference:     227972
 # Best-fit algorithm (for same example process);
-#       memory_claimed: XXX
-#       memory_free:    XXX
+#       memory_claimed: 2040197120
+#       memory_free:    1991656392
+#       difference:     48540728
 #
 #
 # As shown, the best-fit algorithm performs more efficiently 
