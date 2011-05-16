@@ -10,7 +10,8 @@
 /*
  * Changed noop_data to include the read/write head location
  * Changed noop_init to initialize head location to 0
- * Changes that need to be made: Convert all functions to clook_...
+ * Changed noop_... functions to be named clook_...
+ * Changes that need to be made: 
  * Modify dispatch function
  * Modify how add requests are handled
  *      Search through list, and insert new link in proper spot. Should be O(n) for search and add.
