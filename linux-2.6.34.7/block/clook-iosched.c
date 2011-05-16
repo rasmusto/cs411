@@ -46,11 +46,11 @@ static void clook_merged_requests(struct request_queue *q, struct request *rq,
 
 static int clook_dispatch(struct request_queue *q, int force)
 {
-	struct clook_data *nd = q->elevator->elevator_data;
+	struct clook_data *cd = q->elevator->elevator_data;
 
-	if (!list_empty(&nd->queue)) {
+	if (!list_empty(&cd->queue)) {
 		struct request *rq;
-		rq = list_entry(nd->queue.next, struct request, queuelist);
+		rq = list_entry(cd->queue.next, struct request, queuelist);
 		list_del_init(&rq->queuelist);
 		elv_dispatch_sort(q, rq);
 		return 1;
@@ -60,24 +60,25 @@ static int clook_dispatch(struct request_queue *q, int force)
 
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
-	struct clook_data *nd = q->elevator->elevator_data;
+	struct clook_data *cd = q->elevator->elevator_data;
 
-	list_add_tail(&rq->queuelist, &nd->queue);
+	//list_add_tail(&rq->queuelist, &cd->queue);
+        list_for_each_entry(rq, cd->queue, queuelist);
 }
 
 static int clook_queue_empty(struct request_queue *q)
 {
-	struct clook_data *nd = q->elevator->elevator_data;
+	struct clook_data *cd = q->elevator->elevator_data;
 
-	return list_empty(&nd->queue);
+	return list_empty(&cd->queue);
 }
 
 static struct request *
 clook_former_request(struct request_queue *q, struct request *rq)
 {
-	struct clook_data *nd = q->elevator->elevator_data;
+	struct clook_data *cd = q->elevator->elevator_data;
 
-	if (rq->queuelist.prev == &nd->queue)
+	if (rq->queuelist.prev == &cd->queue)
 		return NULL;
 	return list_entry(rq->queuelist.prev, struct request, queuelist);
 }
@@ -85,9 +86,9 @@ clook_former_request(struct request_queue *q, struct request *rq)
 static struct request *
 clook_latter_request(struct request_queue *q, struct request *rq)
 {
-	struct clook_data *nd = q->elevator->elevator_data;
+	struct clook_data *cd = q->elevator->elevator_data;
 
-	if (rq->queuelist.next == &nd->queue)
+	if (rq->queuelist.next == &cd->queue)
 		return NULL;
 	return list_entry(rq->queuelist.next, struct request, queuelist);
 }
@@ -105,10 +106,10 @@ static void *clook_init_queue(struct request_queue *q)
 
 static void clook_exit_queue(struct elevator_queue *e)
 {
-	struct clook_data *nd = e->elevator_data;
+	struct clook_data *cd = e->elevator_data;
 
-	BUG_ON(!list_empty(&nd->queue));
-	kfree(nd);
+	BUG_ON(!list_empty(&cd->queue));
+	kfree(*cd);
 }
 
 static struct elevator_type elevator_clook = {
