@@ -142,6 +142,6 @@ module_init(clook_init);
 module_exit(clook_exit);
 
 
-MODULE_AUTHOR("Jens Axboe");
+MODULE_AUTHOR("Jake Cray, Rodney Keeling, Torben Rasmussen, Helen Shin");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("No-op IO scheduler");
+MODULE_DESCRIPTION("Clook IO scheduler");
