@@ -12,6 +12,7 @@ tar rvf proj02.tar.gz slob_syscalls
 tar rvf proj02.tar.gz 2.6.34.7-proj02.patch
 tar rvf proj02.tar.gz git.log
 tar rvf proj02.tar.gz README
+tar rvf proj02.tar.gz linux-2.6.34.7/mm/slob.c
 
 #Clean up files
 rm 2.6.34.7-proj02.patch
