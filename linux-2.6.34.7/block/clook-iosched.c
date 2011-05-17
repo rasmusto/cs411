@@ -61,6 +61,7 @@ static int clook_dispatch(struct request_queue *q, int force)
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
+    printk("[CLOOK] add <direction> <sector>\n");
 
     // Instead of adding to end, iterate through queue to find correct position
     list_for_each_entry(rq, cd->queue, queuelist) {
@@ -156,6 +157,7 @@ static void elevator_set_req_fn()
  */
 static void elevator_add_req_fn()
 {
+    printk("[CLOOK] dsp <direction> <sector>\n");
 
 }
 

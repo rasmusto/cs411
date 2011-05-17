@@ -50,10 +50,10 @@ config DEBUG_CFQ_IOSCHED
 	  blktrace output more verbose.
 
 config IOSCHED_CLOOK
-        bool "CLOOK I/O scheduler"
-        default y
-        ---help---
-          Enable CLOOK IO scheduling to add more megabytes to your copmuter.
+    bool "CLOOK I/O scheduler"
+    default n
+    ---help---
+        Enable CLOOK IO scheduling to add more megabytes to your copmuter.
 
 choice
 	prompt "Default I/O scheduler"
@@ -69,10 +69,10 @@ choice
 		bool "CFQ" if IOSCHED_CFQ=y
 
 	config DEFAULT_NOOP
-		bool "No-op"
-        
-        config DEFAULT_CLOOK
-                bool "CLOOK" if IOSCHED_CLOOK=y
+        bool "No-op"
+
+    config DEFAULT_CLOOK
+        bool "CLOOK" if IOSCHED_CLOOK=y
 
 endchoice
 
