@@ -33,6 +33,8 @@
 #include <linux/slab.h>
 #include <linux/init.h>
 
+static int cs411_printk_index;
+
 struct clook_data {
     struct list_head queue;
     long head_loc; // Location of the head
@@ -60,6 +62,10 @@ static int clook_dispatch(struct request_queue *q, int force)
 
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
+    if(cs411_printk_index < 25)
+        printk("rq->__sector = %d\n", rq->__sector);
+    cs411_printk_index++;
+
     struct clook_data *cd = q->elevator->elevator_data;
     printk("[CLOOK] add <direction> <sector>\n");
 
