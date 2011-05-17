@@ -46,6 +46,9 @@ static void clook_merged_requests(struct request_queue *q, struct request *rq,
     list_del_init(&next->queuelist);
 }
 
+/* takes the next request to be serviced from your scheduler's list and 
+ * submits it to the dispatch queue.
+ */
 static int clook_dispatch(struct request_queue *q, int force)
 {
     struct clook_data *cd = q->elevator->elevator_data;
@@ -60,14 +63,19 @@ static int clook_dispatch(struct request_queue *q, int force)
     return 0;
 }
 
+/* takes an I/O request from the kernel and inserts it into your scheduler in 
+ * whatever sorted order you choose.
+ */
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
+    struct clook_data *cd = q->elevator->elevator_data;
+
     if(cs411_printk_index < 25)
-        printk("rq->__sector = %d\n", rq->__sector);
+        printk("rq->__sector = %ld\n", (long)rq->__sector);
     cs411_printk_index++;
 
-    struct clook_data *cd = q->elevator->elevator_data;
     printk("[CLOOK] add <direction> <sector>\n");
+    printk("[CLOOK] dsp <direction> <sector>\n");
 
     // Instead of adding to end, iterate through queue to find correct position
     list_for_each_entry(rq, cd->queue, queuelist) {
@@ -76,6 +84,8 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
     }
 }
 
+/* tells the kernel whether or not your scheduler is holding any pending requests
+*/
 static int clook_queue_empty(struct request_queue *q)
 {
     struct clook_data *cd = q->elevator->elevator_data;
@@ -83,7 +93,7 @@ static int clook_queue_empty(struct request_queue *q)
     return list_empty(&cd->queue);
 }
 
-    static struct request *
+static struct request *
 clook_former_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
@@ -93,7 +103,7 @@ clook_former_request(struct request_queue *q, struct request *rq)
     return list_entry(rq->queuelist.prev, struct request, queuelist);
 }
 
-    static struct request *
+static struct request *
 clook_latter_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
@@ -103,6 +113,11 @@ clook_latter_request(struct request_queue *q, struct request *rq)
     return list_entry(rq->queuelist.next, struct request, queuelist);
 }
 
+/* Allocates and initializes any data structures or other memory you will need
+ * to make your scheduler work. For example, a list_head structure to represent
+ * the head of your sorted request list; called when your scheduler is selected to
+ * handle scheduling for a disk.
+ */
 static void *clook_init_queue(struct request_queue *q)
 {
     struct clook_data *cd;
@@ -114,12 +129,32 @@ static void *clook_init_queue(struct request_queue *q)
     return cd;
 }
 
+/* deallocates memory allocated in elevator_init_fn; called when your 
+ * scheduler is relieved of its scheduling duties for a disk.
+ */
 static void clook_exit_queue(struct elevator_queue *e)
 {
     struct clook_data *cd = e->elevator_data;
 
     BUG_ON(!list_empty(&cd->queue));
-    kfree(*cd);
+    kfree(cd);
+}
+
+/* Allocates and initializes any memory you need to associate with an 
+ * individual request and stores it in one or both of the request's 
+ * elevator_private and elevator_private2 fields.
+ */
+static void clook_set_request()
+{
+
+}
+
+/* deallocates memory allocated by elevator_set_req_fn; called after 
+ * elevator_dispatch_fn
+ */
+static void clook_put_request()
+{
+
 }
 
 static struct elevator_type elevator_clook = {
@@ -132,90 +167,12 @@ static struct elevator_type elevator_clook = {
         .elevator_latter_req_fn		= clook_latter_request,
         .elevator_init_fn		= clook_init_queue,
         .elevator_exit_fn		= clook_exit_queue,
+        .elevator_set_req_fn    = clook_set_request;
+        .elevator_put_req_fn    = clook_put_request;
     },
     .elevator_name = "clook",
     .elevator_owner = THIS_MODULE,
 };
-
-/* Allocates and initializes any data structures or other memory you will need
- * to make your scheduler work. For example, a list_head structure to represent
- * the head of your sorted request list; called when your scheduler is selected to
- * handle scheduling for a disk.
- */
-static void elevator_init_fn()
-{
-
-}
-
-
-/* Allocates and initializes any memory you need to associate with an 
- * individual request and stores it in one or both of the request's 
- * elevator_private and elevator_private2 fields.
- */
-static void elevator_set_req_fn()
-{
-
-}
-
-
-/* takes an I/O request from the kernel and inserts it into your scheduler in 
- * whatever sorted order you choose.
- */
-static void elevator_add_req_fn()
-{
-    printk("[CLOOK] dsp <direction> <sector>\n");
-
-}
-
-
-/* takes the next request to be serviced from your scheduler's list and 
- * submits it to the dispatch queue.
- */
-static void elevator_dispatch_fn()
-{
-
-}
-
-
-/* deallocates memory allocated by elevator_set_req_fn; called after 
- * elevator_dispatch_fn
- */
-static void elevator_put_req_fn()
-{
-
-}
-
-
-/* deallocates memory allocated in elevator_init_fn; called when your 
- * scheduler is relieved of its scheduling duties for a disk.
- */
-static void elevator_exit_req_fn()
-{
-
-}
-
-
-/* tells the kernel whether or not your scheduler is holding any pending requests
-*/
-static void elevator_queue_empty_fn()
-{
-
-}
-
-
-/* dunno */
-static void elevator_former_req_fn()
-{
-
-}
-
-
-/* dunno */
-static void elevator_latter_req_fn()
-{
-
-}
-
 
 static int __init clook_init(void)
 {
