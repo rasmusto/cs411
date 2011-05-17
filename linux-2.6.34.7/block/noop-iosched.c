@@ -8,7 +8,7 @@
 #include <linux/slab.h>
 #include <linux/init.h>
 
-static int cs411_printk_index++;
+static int cs411_printk_index;
 
 struct noop_data {
 	struct list_head queue;

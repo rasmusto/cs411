@@ -795,7 +795,6 @@ extern int scsi_cmd_ioctl(struct request_queue *, struct gendisk *, fmode_t,
 extern int sg_scsi_ioctl(struct request_queue *, struct gendisk *, fmode_t,
 			 struct scsi_ioctl_command __user *);
 //cs411
-static int cs411_printk_index++;
 
 /*
  * A queue has just exitted congestion.  Note this in the global counter of
