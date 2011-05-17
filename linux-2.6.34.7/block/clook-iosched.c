@@ -63,7 +63,11 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
 	struct clook_data *cd = q->elevator->elevator_data;
 
 	//list_add_tail(&rq->queuelist, &cd->queue);
-        list_for_each_entry(rq, cd->queue, queuelist);
+        // Instead of adding to end, iterate through queue to find correct position
+        list_for_each_entry(rq, cd->queue, queuelist) {
+        
+        
+        }
 }
 
 static int clook_queue_empty(struct request_queue *q)
