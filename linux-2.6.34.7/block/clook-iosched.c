@@ -78,10 +78,11 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
     printk("[CLOOK] dsp <direction> <sector>\n");
 
     // Instead of adding to end, iterate through queue to find correct position
-    list_for_each_entry(rq, cd->queue, queuelist) {
-
+    /* The arguments of this are wrong
+    list_for_each_entry(rq, queue, queuelist) {
 
     }
+    */
 }
 
 /* tells the kernel whether or not your scheduler is holding any pending requests
@@ -144,7 +145,7 @@ static void clook_exit_queue(struct elevator_queue *e)
  * individual request and stores it in one or both of the request's 
  * elevator_private and elevator_private2 fields.
  */
-static void clook_set_request()
+static void clook_set_request(void)
 {
 
 }
@@ -152,7 +153,7 @@ static void clook_set_request()
 /* deallocates memory allocated by elevator_set_req_fn; called after 
  * elevator_dispatch_fn
  */
-static void clook_put_request()
+static void clook_put_request(void)
 {
 
 }
@@ -167,8 +168,8 @@ static struct elevator_type elevator_clook = {
         .elevator_latter_req_fn		= clook_latter_request,
         .elevator_init_fn		= clook_init_queue,
         .elevator_exit_fn		= clook_exit_queue,
-        .elevator_set_req_fn    = clook_set_request;
-        .elevator_put_req_fn    = clook_put_request;
+        .elevator_set_req_fn    = clook_set_request,
+        .elevator_put_req_fn    = clook_put_request,
     },
     .elevator_name = "clook",
     .elevator_owner = THIS_MODULE,
