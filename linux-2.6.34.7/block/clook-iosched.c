@@ -127,6 +127,85 @@ static struct elevator_type elevator_clook = {
 	.elevator_owner = THIS_MODULE,
 };
 
+/* Allocates and initializes any data structures or other memory you will need
+ * to make your scheduler work. For example, a list_head structure to represent
+ * the head of your sorted request list; called when your scheduler is selected to
+ * handle scheduling for a disk.
+ */
+static void elevator_init_fn()
+{
+
+}
+
+
+/* Allocates and initializes any memory you need to associate with an 
+ * individual request and stores it in one or both of the request's 
+ * elevator_private and elevator_private2 fields.
+ */
+static void elevator_set_req_fn()
+{
+
+}
+
+
+/* takes an I/O request from the kernel and inserts it into your scheduler in 
+ * whatever sorted order you choose.
+ */
+static void elevator_add_req_fn()
+{
+        
+}
+
+
+/* takes the next request to be serviced from your scheduler's list and 
+ * submits it to the dispatch queue.
+ */
+static void elevator_dispatch_fn()
+{
+        
+}
+
+
+/* deallocates memory allocated by elevator_set_req_fn; called after 
+ * elevator_dispatch_fn
+ */
+static void elevator_put_req_fn()
+{
+        
+}
+
+
+/* deallocates memory allocated in elevator_init_fn; called when your 
+ * scheduler is relieved of its scheduling duties for a disk.
+ */
+static void elevator_exit_req_fn()
+{
+        
+}
+
+
+/* tells the kernel whether or not your scheduler is holding any pending requests
+ */
+static void elevator_queue_empty_fn()
+{
+        
+}
+
+
+/* dunno */
+static void elevator_former_req_fn()
+{
+        
+}
+
+
+/* dunno */
+static void elevator_latter_req_fn()
+{
+        
+}
+
+
 static int __init clook_init(void)
 {
 	elv_register(&elevator_clook);
