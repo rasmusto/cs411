@@ -76,16 +76,17 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
 
 //to do list
 //
-    if (list_empty(&cd->queue))
+    if (list_empty(&cd->queue)) {
         printk("The list is empty!\n");
-        //list_add_tail(&rq->queuelist, &cd->queue);
+    //    list_add_tail(&rq->queuelist, &cd->queue);
+    }
     else{
 
 
         // Instead of adding to end, iterate through queue to find correct position
         // This is wrong... Need to compare request sector with current iterations sector
         // If request sector is larger than the current sector we want the next link.
-        list_for_each_entry(cd, &cd->queue, queue){
+        list_for_each_entry(rq, cd->queue, queuelist){
             printk("[CLOOK] Iterating through list\n");
             /*
             if(rq->__sector > &cd->head ){
