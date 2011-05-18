@@ -69,6 +69,7 @@ static int clook_dispatch(struct request_queue *q, int force)
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
+	struct noop_data *nd = q->elevator->elevator_data;
 
     if(cs411_printk_index < 25)
         printk("rq->__sector = %ld\n", (long)rq->__sector);
@@ -76,6 +77,9 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
 
     printk("[CLOOK] add <direction> <sector>\n");
     printk("[CLOOK] dsp <direction> <sector>\n");
+
+
+	list_add_tail(&rq->queuelist, &nd->queue);
 
     // Instead of adding to end, iterate through queue to find correct position
     /* The arguments of this are wrong
