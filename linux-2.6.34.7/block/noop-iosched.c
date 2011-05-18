@@ -39,7 +39,7 @@ static void noop_add_request(struct request_queue *q, struct request *rq)
 	struct noop_data *nd = q->elevator->elevator_data;
 
     if(cs411_printk_index < 25)
-        printk("rq->__sector = %d\n", rq->__sector);
+        printk("[NOOP] rq->__sector = %d\n", rq->__sector);
     cs411_printk_index++;
 
 	list_add_tail(&rq->queuelist, &nd->queue);
