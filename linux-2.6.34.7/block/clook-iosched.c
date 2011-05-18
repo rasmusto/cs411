@@ -77,9 +77,9 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
     // This is wrong... Need to compare request sector with current iterations sector
     // If request sector is larger than the current sector we want the next link.
     // Jake added this, it may need work
-    list_for_each_entry(cd, &request_queue, q){
+    list_for_each_entry(cd, &rq, q){
         if(rq->__sector > &cd->head ){
-            printk("rq->__sector = %ld\n", rq->__sector);
+            printk("rq->__sector = %ld\n", (long)rq->__sector);
             continue;
         }
     }
