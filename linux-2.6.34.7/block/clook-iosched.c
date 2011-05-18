@@ -94,7 +94,7 @@ static int clook_queue_empty(struct request_queue *q)
     return list_empty(&cd->queue);
 }
 
-static struct request *
+    static struct request *
 clook_former_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
@@ -104,7 +104,7 @@ clook_former_request(struct request_queue *q, struct request *rq)
     return list_entry(rq->queuelist.prev, struct request, queuelist);
 }
 
-static struct request *
+    static struct request *
 clook_latter_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
