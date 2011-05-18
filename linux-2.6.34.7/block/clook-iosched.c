@@ -140,7 +140,7 @@ static void *clook_init_queue(struct request_queue *q)
     if (!cd)
         return NULL;
     INIT_LIST_HEAD(&cd->queue);
-    cd->head_loc = 0; //init head location as 0
+    &cd->head_loc = 0; //init head location as 0
     return cd;
 }
 
