@@ -8,8 +8,6 @@
 #include <linux/slab.h>
 #include <linux/init.h>
 
-static int cs411_printk_index;
-
 struct noop_data {
 	struct list_head queue;
 };
@@ -38,9 +36,7 @@ static void noop_add_request(struct request_queue *q, struct request *rq)
 {
 	struct noop_data *nd = q->elevator->elevator_data;
 
-    if(cs411_printk_index < 25)
-        printk("[NOOP] rq->__sector = %d\n", rq->__sector);
-    cs411_printk_index++;
+    printk("[NOOP] rq->__sector = %ld\n", (long)rq->__sector);
 
 	list_add_tail(&rq->queuelist, &nd->queue);
 }

@@ -33,8 +33,6 @@
 #include <linux/slab.h>
 #include <linux/init.h>
 
-static int cs411_printk_index;
-
 struct clook_data {
     struct list_head queue;
     long head_loc; // Location of the head
@@ -70,22 +68,22 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
 
-    if(cs411_printk_index < 25)
-        printk("[CLOOK] rq->__sector = %ld\n", (long)rq->__sector);
-    cs411_printk_index++;
+    printk("[CLOOK] rq->__sector = %ld\n", (long)rq->__sector);
 
     printk("[CLOOK] add <direction> <sector>\n");
     printk("[CLOOK] dsp <direction> <sector>\n");
 
-
-	list_add_tail(&rq->queuelist, &cd->queue);
-
     // Instead of adding to end, iterate through queue to find correct position
-    /* The arguments of this are wrong
-    list_for_each_entry(rq, queue, queuelist) {
-
+    // This is wrong... Need to compare request sector with current iterations sector
+    // If request sector is larger than the current sector we want the next link.
+    // Jake added this, it may need work
+    list_for_each_entry(cd, &request_queue, q){
+        if(rq->__sector > &cd->head ){
+            printk("rq->__sector = %ld\n", rq->__sector);
+            continue;
+        }
     }
-    */
+	list_add_tail(&rq->queuelist, &cd->queue);
 }
 
 /* tells the kernel whether or not your scheduler is holding any pending requests
