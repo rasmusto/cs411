@@ -67,39 +67,41 @@ static int clook_dispatch(struct request_queue *q, int force)
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
 
-    struct clook_data *cd = q->elevator->elevator_data;
+        struct clook_data *cd = q->elevator->elevator_data;
 
-    printk("[CLOOK] rq->__sector = %ld\n", (long)rq->__sector);
+        printk("[CLOOK] rq->__sector = %ld\n", (long)rq->__sector);
 
-    printk("[CLOOK] add <direction> <sector>\n");
-    printk("[CLOOK] dsp <direction> <sector>\n");
+        printk("[CLOOK] add <direction> <sector>\n");
+        printk("[CLOOK] dsp <direction> <sector>\n");
 
-//to do list
-//check for list is empty
-//add to tail
-//else iterate
+        //to do list
+        //check for list is empty
+        //add to tail
+        //else iterate
 
-//
-//parameters -- (rq, 
+        //
+        //parameters -- (rq, 
 
-    // Instead of adding to end, iterate through queue to find correct position
-    // This is wrong... Need to compare request sector with current iterations sector
-    // If request sector is larger than the current sector we want the next link.
-    // Jake added this, it may need work
-        
+        // Instead of adding to end, iterate through queue to find correct position
+        // This is wrong... Need to compare request sector with current iterations sector
+        // If request sector is larger than the current sector we want the next link.
+        // Jake added this, it may need work
 
 
-	list_for_each_entry(rq, &rq->queuelist, q){
-       /* if(rq->__sector > &cd->head ){
-            printk("rq->__sector = %ld\n", (long)rq->__sector);
-            continue;
+
+        list_for_each_entry(rq, &rq->queuelist, q){
+                /* if(rq->__sector > &cd->head ){
+                   printk("rq->__sector = %ld\n", (long)rq->__sector);
+                   continue;
+                   }
+                   */
+                printk("[CLOOK] Iterating through\n");
+
         }
-*/
-    }
-	
 
-//	list_add_tail(&rq->queuelist, &cd->queue);
-     
+
+        list_add_tail(&rq->queuelist, &cd->queue);
+
 }
 
 /* tells the kernel whether or not your scheduler is holding any pending requests
