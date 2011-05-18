@@ -76,3 +76,6 @@ GTAGS
 *.orig
 *~
 \#*#
+
+# vim stuff
+tags
