@@ -35,7 +35,7 @@
 
 struct clook_data {
     struct list_head queue;
-    long head_loc; // Location of the head
+    //long head_loc; // Location of the head
 };
 
 static void clook_merged_requests(struct request_queue *q, struct request *rq,
@@ -66,36 +66,10 @@ static int clook_dispatch(struct request_queue *q, int force)
  */
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
-
     struct clook_data *cd = q->elevator->elevator_data;
 
     printk("[CLOOK] rq->__sector = %ld\n", (long)rq->__sector);
 
-    printk("[CLOOK] add <direction> <sector>\n");
-    printk("[CLOOK] dsp <direction> <sector>\n");
-
-//to do list
-//
-    if (list_empty(&cd->queue)) {
-        printk("The list is empty!\n");
-    //    list_add_tail(&rq->queuelist, &cd->queue);
-    }
-    else{
-
-
-        // Instead of adding to end, iterate through queue to find correct position
-        // This is wrong... Need to compare request sector with current iterations sector
-        // If request sector is larger than the current sector we want the next link.
-        list_for_each_entry(rq, cd->queue, queuelist){
-            printk("[CLOOK] Iterating through list\n");
-            /*
-            if(rq->__sector > &cd->head ){
-                printk("rq->__sector = %ld\n", (long)rq->__sector);
-                continue;
-            }
-            */
-        }
-    }
     list_add_tail(&rq->queuelist, &cd->queue);
 }
 
@@ -140,7 +114,7 @@ static void *clook_init_queue(struct request_queue *q)
     if (!cd)
         return NULL;
     INIT_LIST_HEAD(&cd->queue);
-    cd->head_loc = 0; //init head location as 0
+    //cd->head_loc = 0; //init head location as 0
     return cd;
 }
 
@@ -158,19 +132,19 @@ static void clook_exit_queue(struct elevator_queue *e)
 /* Allocates and initializes any memory you need to associate with an 
  * individual request and stores it in one or both of the request's 
  * elevator_private and elevator_private2 fields.
- */
 static void clook_set_request(void)
 {
 
 }
+*/
 
 /* deallocates memory allocated by elevator_set_req_fn; called after 
  * elevator_dispatch_fn
- */
 static void clook_put_request(void)
 {
 
 }
+*/
 
 static struct elevator_type elevator_clook = {
     .ops = {
@@ -182,8 +156,8 @@ static struct elevator_type elevator_clook = {
         .elevator_latter_req_fn		= clook_latter_request,
         .elevator_init_fn		= clook_init_queue,
         .elevator_exit_fn		= clook_exit_queue,
-        .elevator_set_req_fn    = clook_set_request,
-        .elevator_put_req_fn    = clook_put_request,
+        //.elevator_set_req_fn    = clook_set_request,
+        //.elevator_put_req_fn    = clook_put_request,
     },
     .elevator_name = "clook",
     .elevator_owner = THIS_MODULE,
