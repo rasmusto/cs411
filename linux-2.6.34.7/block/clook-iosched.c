@@ -35,7 +35,7 @@
 
 struct clook_data {
     struct list_head queue;
-    //long head_loc; // Location of the head
+    long head_loc; // Location of the head
 };
 
 static void clook_merged_requests(struct request_queue *q, struct request *rq,
@@ -67,10 +67,19 @@ static int clook_dispatch(struct request_queue *q, int force)
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
+    struct request *ptr;
 
     printk("[CLOOK] rq->__sector = %ld\n", (long)rq->__sector);
 
-    list_add_tail(&rq->queuelist, &cd->queue);
+    if(list_empty(&cd->queue)){
+        printk("[CLOOK] list is empty");
+        list_add_tail(&rq->queuelist, &cd->queue);
+    }
+
+    printk("[CLOOK] entering into list_for_each_entry \n");
+    list_for_each_entry(ptr, &cd->queue, queuelist){
+
+    }
 }
 
 /* tells the kernel whether or not your scheduler is holding any pending requests
