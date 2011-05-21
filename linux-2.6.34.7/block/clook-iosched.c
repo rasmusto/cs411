@@ -35,7 +35,6 @@
 
 struct clook_data {
     struct list_head queue;
-    sector_t location;          // Sector location of the head
 };
 
 static void clook_merged_requests(struct request_queue *q, struct request *rq,
@@ -61,7 +60,6 @@ static int clook_dispatch(struct request_queue *q, int force)
             printk("[CLOOK] dsp <W> <%lu>\n", (long)rq->__sector);
 
         list_del_init(&rq->queuelist);
-        cd->location = rq->__sector;
         elv_dispatch_add_tail(q,rq);
         return 1;
     }
@@ -74,9 +72,11 @@ static int clook_dispatch(struct request_queue *q, int force)
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
-    struct request *prev;
-    struct request *curr;
-    struct request *next;
+    struct request * prev;
+    struct request * curr;
+    struct request * next;
+
+    struct list_head * location;
 
     if(rq_data_dir(rq))
         printk("[CLOOK] add <W> <%lu>\n", (long)rq->__sector);
@@ -88,33 +88,27 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
         list_add_tail(&rq->queuelist, &cd->queue);
         return;
     }
-    else
-    {
-        list_for_each_entry(curr, &cd->queue, queuelist){
-            prev = list_entry(curr->queuelist.prev,  struct request, queuelist);
-            next = list_entry(curr->queuelist.next,  struct request, queuelist);
-           //case: several requests, comparison for the right places
-            if((curr->__sector > prev->__sector) && (curr->__sector < next->__sector)){
-                list_add(&curr->queuelist, &cd->queue);
-                printk("[CLOOK] middle\n");
-                return;
-            }
-            //case: bigger
-            else if(curr->__sector > prev->__sector){
-                list_add(&curr->queuelist, &cd->queue);
-                printk("[CLOOK] bigger\n");
-                return;
-            }
-            //case: smaller
-            else if(curr->__sector < next->__sector){
-                list_add(&curr->queuelist, &cd->queue);
-                printk("[CLOOK] smaller\n");
-                return;
-            }
-            else{
-                list_add_tail(&rq->queuelist, &cd->queue);
-            }
+
+    list_for_each_entry(curr, &cd->queue, queuelist){
+        prev = list_entry(curr->queuelist.prev,  struct request, queuelist);
+        next = list_entry(curr->queuelist.next,  struct request, queuelist);
+        //case: several requests, comparison for the right places
+
+        if(rq->__sector >= next->__sector){
+            //If request sector is bigger than or equal to we want to iterate past
+            //and add right after
+            continue;
         }
+        else if(list_is_last(curr, &cd->queue)){
+            list_add(&curr->queuelist, &cd->queue);
+            //If the next sector is less than the current
+        }
+        else if(rq->__sector < curr->__sector && rq->__sector < next->__sector){
+            //If we need to add to the start of the list
+            list_add_tail(&curr->queuelist, &cd->queue);
+        }
+        else
+            list_add(&curr->queuelist, &cd->queue);
     }
 }
 
@@ -160,7 +154,6 @@ static void *clook_init_queue(struct request_queue *q)
     if (!cd)
         return NULL;
     INIT_LIST_HEAD(&cd->queue);
-    cd->location = -1;
     return cd;
 }
 
