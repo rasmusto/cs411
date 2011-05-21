@@ -35,7 +35,6 @@
 
 struct clook_data {
     struct list_head queue;
-    struct list_head *head_loc; // Location of the head
     sector_t location;          // Sector location of the head
 };
 
@@ -54,7 +53,6 @@ static int clook_dispatch(struct request_queue *q, int force)
 
     if (!list_empty(&cd->queue)) {
         struct request *rq;
-        cd->head_loc = &(cd->queue);
         rq = list_entry(cd->queue.next, struct request, queuelist);
 
         if(rq_data_dir(rq))
@@ -76,11 +74,9 @@ static int clook_dispatch(struct request_queue *q, int force)
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
-    struct request *ptr;
-    struct request *next;
     struct request *prev;
     struct request *curr;
-    struct list_head *location;
+    struct request *next;
 
     if(rq_data_dir(rq))
         printk("[CLOOK] add <W> <%lu>\n", (long)rq->__sector);
@@ -94,24 +90,23 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
     }
     else
     {
-        list_for_each_entry(ptr, &cd->queue, queuelist){
-            prev = list_entry(ptr->queuelist.prev,  struct request, queuelist);
-            curr = ptr;
-            next = list_entry(ptr->queuelist.next,  struct request, queuelist);
+        list_for_each_entry(curr, &cd->queue, queuelist){
+            prev = list_entry(curr->queuelist.prev,  struct request, queuelist);
+            next = list_entry(curr->queuelist.next,  struct request, queuelist);
            //case: several requests, comparison for the right places
-            if((curr->__sector > prev->__sector) && (curr->__sector < prev->__sector)){
+            if((curr->__sector > prev->__sector) && (curr->__sector < next->__sector)){
                 list_add(&curr->queuelist, &cd->queue);
                 printk("[CLOOK] middle\n");
                 return;
             }
             //case: bigger
-            else if(ptr->__sector > prev->__sector){
+            else if(curr->__sector > prev->__sector){
                 list_add(&curr->queuelist, &cd->queue);
                 printk("[CLOOK] bigger\n");
                 return;
             }
             //case: smaller
-            else if(ptr->__sector < next->__sector){
+            else if(curr->__sector < next->__sector){
                 list_add(&curr->queuelist, &cd->queue);
                 printk("[CLOOK] smaller\n");
                 return;
