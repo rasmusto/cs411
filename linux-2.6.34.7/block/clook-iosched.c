@@ -36,6 +36,7 @@
 struct clook_data {
     struct list_head queue;
     struct list_head *head_loc; // Location of the head
+    sector_t location;          // Sector location of the head
 };
 
 static void clook_merged_requests(struct request_queue *q, struct request *rq,
@@ -55,8 +56,15 @@ static int clook_dispatch(struct request_queue *q, int force)
         struct request *rq;
         cd->head_loc = &(cd->queue);
         rq = list_entry(cd->queue.next, struct request, queuelist);
+
+        if(rq_data_dir(rq))
+            printk("[CLOOK] dsp <W> <%lu>\n",rq->__sector);
+        else
+            printk("[CLOOK] dsp <W> <%lu>\n",rq->__sector);
+
         list_del_init(&rq->queuelist);
-        elv_dispatch_sort(q, rq);
+        cd->location = rq->sector;
+        elv_dispatch_add_tail(q,rq);
         return 1;
     }
     return 0;
@@ -152,11 +160,12 @@ clook_latter_request(struct request_queue *q, struct request *rq)
 static void *clook_init_queue(struct request_queue *q)
 {
     struct clook_data *cd;
+
     cd = kmalloc_node(sizeof(*cd), GFP_KERNEL, q->node);
     if (!cd)
         return NULL;
     INIT_LIST_HEAD(&cd->queue);
-    //cd->head_loc = 0; //init head location as 0
+    cd->location = -1;
     return cd;
 }
 
