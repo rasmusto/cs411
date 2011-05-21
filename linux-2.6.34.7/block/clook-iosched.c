@@ -107,9 +107,11 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
                 printk("[CLOOK] smaller\n");
                 return;
             }
+            else{
+                list_add_tail(&rq->queuelist, &cd->queue);
+            }
         }
     }
-    //list_add_tail(&rq->queuelist, &cd->queue);
 }
 
 /* tells the kernel whether or not your scheduler is holding any pending requests
