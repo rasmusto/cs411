@@ -67,22 +67,40 @@ static int clook_dispatch(struct request_queue *q, int force)
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
+    struct request *ptr;
     struct request *next;
     struct request *prev;
     struct request *curr;
     struct list_head *location;
 
-	if(rq_data_dir(rq))
-        printk("[CLOOK] add <W> <%u>\n", rq->sector);
+    if(rq_data_dir(rq))
+        printk("[CLOOK] add <W> <%u>\n", rq->__sector);
     else
-        printk("[CLOOK] add <R> <%u>\n", rq->sector);
+        printk("[CLOOK] add <R> <%u>\n", rq->__sector);
 
     if(list_empty(&cd->queue)){
         printk("[CLOOK] list is empty");
         list_add_tail(&rq->queuelist, &cd->queue);
+        return;
     }
     else
-        list_add_tail(&rq->queuelist, &cd->queue);
+    {
+        list_for_each_entry(ptr, &cd->queue, queuelist){
+            if(ptr->__sector >  ptr->queuelist->prev->__sector && ptr->__sector < ptr->queuelist->prev){
+                list_add(&curr->queuelist, &cd->queue);
+                return;
+            }
+            else if(ptr->__sector > ptr->queuelist->prev){
+                list_add(&curr->queuelist, &cd->queue);
+                return;
+            }
+            else if(ptr->__sector < ptr->queuelist->next){
+                list_add(&curr->queuelist, &cd->queue);
+                return;
+            }
+        }
+    }
+    //list_add_tail(&rq->queuelist, &cd->queue);
 }
 
 /* tells the kernel whether or not your scheduler is holding any pending requests
@@ -92,10 +110,8 @@ static int clook_queue_empty(struct request_queue *q)
     struct clook_data *cd = q->elevator->elevator_data;
 
     return list_empty(&cd->queue);
-}
 
-    static struct request *
-clook_former_request(struct request_queue *q, struct request *rq)
+    static struct request clook_former_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
 
