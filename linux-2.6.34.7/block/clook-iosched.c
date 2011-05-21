@@ -99,7 +99,7 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
             //and add right after
             continue;
         }
-        else if(list_is_last(curr->queuelist, &cd->queue)){
+        else if(list_is_last(&curr->queuelist, &cd->queue)){
             list_add(&curr->queuelist, &cd->queue);
             //If the next sector is less than the current
         }
