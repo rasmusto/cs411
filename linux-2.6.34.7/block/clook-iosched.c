@@ -79,26 +79,32 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
         printk("[CLOOK] add <R> <%u>\n", rq->__sector);
 
     if(list_empty(&cd->queue)){
-        printk("[CLOOK] list is empty");
+        printk("[CLOOK] list is empty\n");
         list_add_tail(&rq->queuelist, &cd->queue);
         return;
     }
     else
     {
         list_for_each_entry(ptr, &cd->queue, queuelist){
+            prev = list_entry(ptr->queuelist.prev,  struct request, queuelist);
+            curr = ptr;
+            next = list_entry(ptr->queuelist.next,  struct request, queuelist);
            //case: several requests, comparison for the right places
-            if((ptr->__sector > ptr->queuelist->prev->__sector) &&( ptr->__sector < ptr->queuelist->prev->__sector)){
+            if((curr->__sector > prev->__sector) && (curr->__sector < prev->__sector)){
                 list_add(&curr->queuelist, &cd->queue);
+                printk("[CLOOK] middle\n");
                 return;
             }
             //case: bigger
-            else if(ptr->__sector > ptr->queuelist->prev->__sector){
+            else if(ptr->__sector > prev->__sector){
                 list_add(&curr->queuelist, &cd->queue);
+                printk("[CLOOK] bigger\n");
                 return;
             }
             //case: smaller
-            else if(ptr->__sector < ptr->queuelist->next->__sector){
+            else if(ptr->__sector < next->__sector){
                 list_add(&curr->queuelist, &cd->queue);
+                printk("[CLOOK] smaller\n");
                 return;
             }
         }
@@ -113,8 +119,10 @@ static int clook_queue_empty(struct request_queue *q)
     struct clook_data *cd = q->elevator->elevator_data;
 
     return list_empty(&cd->queue);
+}
 
-    static struct request clook_former_request(struct request_queue *q, struct request *rq)
+    static struct request *
+clook_former_request(struct request_queue *q, struct request *rq)
 {
     struct clook_data *cd = q->elevator->elevator_data;
 
