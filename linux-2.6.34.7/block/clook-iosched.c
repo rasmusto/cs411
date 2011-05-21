@@ -86,15 +86,18 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
     else
     {
         list_for_each_entry(ptr, &cd->queue, queuelist){
-            if(ptr->__sector >  ptr->queuelist->prev->__sector && ptr->__sector < ptr->queuelist->prev){
+           //case: several requests, comparison for the right places
+            if((ptr->__sector > ptr->queuelist->prev->__sector) &&( ptr->__sector < ptr->queuelist->prev->__sector)){
                 list_add(&curr->queuelist, &cd->queue);
                 return;
             }
-            else if(ptr->__sector > ptr->queuelist->prev){
+            //case: bigger
+            else if(ptr->__sector > ptr->queuelist->prev->__sector){
                 list_add(&curr->queuelist, &cd->queue);
                 return;
             }
-            else if(ptr->__sector < ptr->queuelist->next){
+            //case: smaller
+            else if(ptr->__sector < ptr->queuelist->next->__sector){
                 list_add(&curr->queuelist, &cd->queue);
                 return;
             }
