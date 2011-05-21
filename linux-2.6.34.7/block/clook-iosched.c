@@ -35,7 +35,7 @@
 
 struct clook_data {
     struct list_head queue;
-    long head_loc; // Location of the head
+    struct list_head *head_loc; // Location of the head
 };
 
 static void clook_merged_requests(struct request_queue *q, struct request *rq,
@@ -53,6 +53,7 @@ static int clook_dispatch(struct request_queue *q, int force)
 
     if (!list_empty(&cd->queue)) {
         struct request *rq;
+        cd->head_loc = &(cd->queue);
         rq = list_entry(cd->queue.next, struct request, queuelist);
         list_del_init(&rq->queuelist);
         elv_dispatch_sort(q, rq);
