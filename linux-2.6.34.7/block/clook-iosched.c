@@ -91,11 +91,14 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
     }
 
     if(list_is_singular(&cd->queue)){
+        printk("[CLOOK] list is singular\n");
         if(rq->__sector < curr->__sector){
+            printk("[CLOOK] adding to head\n");
             list_add_tail(&rq->queuelist, &cd->queue);
             return;
         }
         else{
+            printk("[CLOOK] adding to tail\n");
             list_add(&rq->queuelist, &cd->queue);
             return;
         }
@@ -103,24 +106,28 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
 
     list_for_each_entry(curr, &cd->queue, queuelist){
         prev = list_entry(curr->queuelist.prev, struct request, queuelist);
-        next = list_entry(curr->queuelist.next,  struct request, queuelist);
+        next = list_entry(curr->queuelist.next, struct request, queuelist);
 
         if(rq->__sector >= next->__sector){
+            printk("[CLOOK] advancing to next request\n");
             //If request sector is bigger than or equal to we want to iterate past
             //and add right after
             continue;
         }
         else if(list_is_last(&curr->queuelist, &cd->queue)){
+            printk("[CLOOK] curr is the last element, adding after it\n");
             list_add(&rq->queuelist, &cd->queue);
             break;
             //If the next sector is less than the current
         }
         else if(rq->__sector < curr->__sector && rq->__sector < next->__sector){
             //If we need to add to the start of the list
+            printk("[CLOOK] curr is a weird case\n");
             list_add_tail(&rq->queuelist, &cd->queue);
             break;
         }
         else{
+            printk("[CLOOK] curr is another weird case\n");
             list_add(&rq->queuelist, &cd->queue);
             break;
         }
