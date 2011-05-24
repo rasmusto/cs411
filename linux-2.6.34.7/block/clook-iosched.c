@@ -92,9 +92,18 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
     list_for_each_entry(curr, &cd->queue, queuelist){
         prev = list_entry(curr->queuelist.prev,  struct request, queuelist);
         next = list_entry(curr->queuelist.next,  struct request, queuelist);
-        //case: several requests, comparison for the right places
 
-        if(rq->__sector >= next->__sector){
+        if(list_is_singular(&curr->queuelist)){
+            if(rq->__sector < curr->__sector){
+                list_add_tail(&curr->queuelist, &cd->queue);
+                return;
+            }
+            else{
+                list_add(&curr->queuelist, &cd->queue);
+                return;
+            }
+        }
+        else if(rq->__sector >= next->__sector){
             //If request sector is bigger than or equal to we want to iterate past
             //and add right after
             continue;
