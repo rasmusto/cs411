@@ -85,12 +85,17 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
 
     curr = list_entry(&rq->queuelist, struct request, queuelist);
 
+    if(list_is_singular(&cd->queue)){
+        printk("[CLOOK] list is singular\n");
+    }
+
     if(list_empty(&cd->queue)){
         printk("[CLOOK] list is empty\n");
         list_add_tail(&rq->queuelist, &cd->queue);
         return;
     }
 
+    /*
     if(list_is_singular(&cd->queue)){
         printk("[CLOOK] list is singular\n");
         if(blk_rq_pos(rq) < blk_rq_pos(curr)){
@@ -104,6 +109,7 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
             return;
         }
     }
+    */
     /*
     if(rq_data_dir(rq))
         printk("[CLOOK] add <W> <%lu>\n", (long)rq->__sector);
