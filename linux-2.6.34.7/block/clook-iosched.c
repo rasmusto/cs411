@@ -35,6 +35,7 @@
 
 struct clook_data {
     struct list_head queue;
+    sector_t head_location;
 };
 
 static void clook_merged_requests(struct request_queue *q, struct request *rq,
@@ -61,6 +62,7 @@ static int clook_dispatch(struct request_queue *q, int force)
 
         list_del_init(&rq->queuelist);
         elv_dispatch_add_tail(q,rq);
+        cd->head_location = blk_rq_pos(rq);
         return 1;
     }
     return 0;
@@ -132,6 +134,7 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
             break;
         }
     }
+    list_add_tail(&rq->queuelist, &cd->queue);
     printk("[CLOOK] add_request exited!\n");
     return;
 }
