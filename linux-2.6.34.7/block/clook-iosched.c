@@ -84,35 +84,6 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
         printk("[CLOOK] add <R> <%lu>\n", (long)blk_rq_pos(rq));
 
     curr = list_entry(&rq->queuelist, struct request, queuelist);
-
-    if(list_empty(&cd->queue)){
-        printk("[CLOOK] list is empty\n");
-        list_add_tail(&rq->queuelist, &cd->queue);
-        return;
-    }
-
-    /*
-    if(list_is_singular(&cd->queue)){
-        printk("[CLOOK] list is singular\n");
-        if(blk_rq_pos(rq) < blk_rq_pos(curr)){
-            printk("[CLOOK] adding to head\n");
-            list_add_tail(&rq->queuelist, &cd->queue);
-            return;
-        }
-        else{
-            printk("[CLOOK] adding to tail\n");
-            list_add(&rq->queuelist, &cd->queue);
-            return;
-        }
-    }
-    */
-    /*
-    if(rq_data_dir(rq))
-        printk("[CLOOK] add <W> <%lu>\n", (long)rq->__sector);
-    else
-        printk("[CLOOK] add <R> <%lu>\n", (long)rq->__sector);
-
-    curr = list_entry(&rq->queuelist, struct request, queuelist);
     printk("[CLOOK] curr = <%lu>\n", (long)curr->__sector);
 
     if(list_empty(&cd->queue)){
@@ -123,7 +94,7 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
 
     if(list_is_singular(&cd->queue)){
         printk("[CLOOK] list is singular\n");
-        if(rq->__sector < curr->__sector){
+        if(blk_rq_pos(rq) < blk_rq_pos(curr)){
             printk("[CLOOK] adding to head\n");
             list_add_tail(&rq->queuelist, &cd->queue);
             return;
@@ -163,10 +134,8 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
             break;
         }
     }
-    list_add_tail(&rq->queuelist, &cd->queue);
     printk("[CLOOK] add_request exited!\n");
     return;
-    */
 }
 
 /* tells the kernel whether or not your scheduler is holding any pending requests
