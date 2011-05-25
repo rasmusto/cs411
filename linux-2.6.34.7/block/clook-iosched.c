@@ -56,9 +56,9 @@ static int clook_dispatch(struct request_queue *q, int force)
         rq = list_entry(cd->queue.next, struct request, queuelist);
 
         if(rq_data_dir(rq))
-            printk("[CLOOK] dsp <W> <%lu>\n", (long)rq->__sector);
+            printk("[CLOOK] dsp <W> <%lu>\n", (long)blk_rq_pos(rq));
         else
-            printk("[CLOOK] dsp <W> <%lu>\n", (long)rq->__sector);
+            printk("[CLOOK] dsp <R> <%lu>\n", (long)blk_rq_pos(rq));
 
         list_del_init(&rq->queuelist);
         elv_dispatch_add_tail(q,rq);
@@ -79,15 +79,11 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
     struct request * next;
 
     if(rq_data_dir(rq))
-        printk("[CLOOK] add <W> <%lu>\n", (long)rq->__sector);
+        printk("[CLOOK] add <W> <%lu>\n", (long)blk_rq_pos(rq));
     else
-        printk("[CLOOK] add <R> <%lu>\n", (long)rq->__sector);
+        printk("[CLOOK] add <R> <%lu>\n", (long)blk_rq_pos(rq));
 
     curr = list_entry(&rq->queuelist, struct request, queuelist);
-
-    if(list_is_singular(&cd->queue)){
-        printk("[CLOOK] list is singular\n");
-    }
 
     if(list_empty(&cd->queue)){
         printk("[CLOOK] list is empty\n");
