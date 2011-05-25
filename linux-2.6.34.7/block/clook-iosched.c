@@ -93,7 +93,7 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
 
     if(list_is_singular(&cd->queue)){
         printk("[CLOOK] list is singular\n");
-        if(rq->__sector < curr->__sector){
+        if(blk_rq_pos(rq) < blk_rq_pos(curr)){
             printk("[CLOOK] adding to head\n");
             list_add_tail(&rq->queuelist, &cd->queue);
             return;
