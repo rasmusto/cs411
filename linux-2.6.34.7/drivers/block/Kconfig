@@ -15,6 +15,11 @@ menuconfig BLK_DEV
 
 if BLK_DEV
 
+config OSU_RD
+    tristate "Oregon State U Ramdisk"
+    ---help---
+    This is the encrypted ramdisk for CS411 at OSU 2011.
+
 config BLK_DEV_FD
 	tristate "Normal floppy disk support"
 	depends on ARCH_MAY_HAVE_PC_FDC
