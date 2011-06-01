@@ -35,7 +35,7 @@
 
 struct clook_data {
     struct list_head queue;
-    long head_loc; // Location of the head
+    sector_t head_location;
 };
 
 static void clook_merged_requests(struct request_queue *q, struct request *rq,
@@ -54,8 +54,15 @@ static int clook_dispatch(struct request_queue *q, int force)
     if (!list_empty(&cd->queue)) {
         struct request *rq;
         rq = list_entry(cd->queue.next, struct request, queuelist);
+
+        if(rq_data_dir(rq))
+            printk("[CLOOK] dsp <W> <%lu>\n", (long)blk_rq_pos(rq));
+        else
+            printk("[CLOOK] dsp <R> <%lu>\n", (long)blk_rq_pos(rq));
+
         list_del_init(&rq->queuelist);
-        elv_dispatch_sort(q, rq);
+        elv_dispatch_add_tail(q,rq);
+        cd->head_location = blk_rq_pos(rq);
         return 1;
     }
     return 0;
@@ -66,6 +73,7 @@ static int clook_dispatch(struct request_queue *q, int force)
  */
 static void clook_add_request(struct request_queue *q, struct request *rq)
 {
+<<<<<<< HEAD:linux-2.6.34.7/block/clook-iosched.c
 
         struct clook_data *cd = q->elevator->elevator_data;
 
@@ -87,8 +95,46 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
         // If request sector is larger than the current sector we want the next link.
         // Jake added this, it may need work
 
+=======
+    struct clook_data *cd = q->elevator->elevator_data;
+    struct request * prev;
+    struct request * curr;
+    struct request * next;
 
+    if(rq_data_dir(rq))
+        printk("[CLOOK] add <W> <%lu>\n", (long)blk_rq_pos(rq));
+    else
+        printk("[CLOOK] add <R> <%lu>\n", (long)blk_rq_pos(rq));
 
+    curr = list_entry(&rq->queuelist, struct request, queuelist);
+    printk("[CLOOK] curr = <%lu>\n", (long)curr->__sector);
+
+    if(list_empty(&cd->queue)){
+        printk("[CLOOK] list is empty\n");
+        list_add_tail(&rq->queuelist, &cd->queue);
+        return;
+    }
+
+    if(list_is_singular(&cd->queue)){
+        printk("[CLOOK] list is singular\n");
+        if(blk_rq_pos(rq) < blk_rq_pos(curr)){
+            printk("[CLOOK] adding to head\n");
+            list_add_tail(&rq->queuelist, &cd->queue);
+            return;
+        }
+        else{
+            printk("[CLOOK] adding to tail\n");
+            list_add(&rq->queuelist, &cd->queue);
+            return;
+        }
+    }
+>>>>>>> 9607fe123325201c174aa2030e3090865667d951:linux-2.6.34.7/block/clook-iosched.c
+
+    list_for_each_entry(curr, &cd->queue, queuelist){
+        prev = list_entry(curr->queuelist.prev, struct request, queuelist);
+        next = list_entry(curr->queuelist.next, struct request, queuelist);
+
+<<<<<<< HEAD:linux-2.6.34.7/block/clook-iosched.c
         list_for_each_entry(rq, &rq->queuelist, q){
                 /* if(rq->__sector > &cd->head ){
                    printk("rq->__sector = %ld\n", (long)rq->__sector);
@@ -102,6 +148,34 @@ static void clook_add_request(struct request_queue *q, struct request *rq)
 
         list_add_tail(&rq->queuelist, &cd->queue);
 
+=======
+        if(rq->__sector < curr->__sector && rq->__sector < next->__sector){
+            //If we need to add to the start of the list
+            printk("[CLOOK] curr is a weird case\n");
+            list_add_tail(&rq->queuelist, &cd->queue);
+            break;
+        }
+        else if(list_is_last(&curr->queuelist, &cd->queue)){
+            printk("[CLOOK] curr is the last element, adding after it\n");
+            list_add(&rq->queuelist, &cd->queue);
+            break;
+            //If the next sector is less than the current
+        }
+        else if(rq->__sector >= next->__sector && next->__sector > curr->__sector){
+            printk("[CLOOK] advancing to next request\n");
+            //If request sector is bigger than or equal to we want to iterate past
+            //and add right after
+            continue;
+        }
+        else{
+            printk("[CLOOK] curr is another weird case\n");
+            list_add(&rq->queuelist, &cd->queue);
+            break;
+        }
+    }
+    printk("[CLOOK] add_request exited!\n");
+    return;
+>>>>>>> 9607fe123325201c174aa2030e3090865667d951:linux-2.6.34.7/block/clook-iosched.c
 }
 
 /* tells the kernel whether or not your scheduler is holding any pending requests
@@ -141,11 +215,11 @@ clook_latter_request(struct request_queue *q, struct request *rq)
 static void *clook_init_queue(struct request_queue *q)
 {
     struct clook_data *cd;
+
     cd = kmalloc_node(sizeof(*cd), GFP_KERNEL, q->node);
     if (!cd)
         return NULL;
     INIT_LIST_HEAD(&cd->queue);
-    cd->head_loc = 0; //init head location as 0
     return cd;
 }
 
@@ -163,19 +237,19 @@ static void clook_exit_queue(struct elevator_queue *e)
 /* Allocates and initializes any memory you need to associate with an 
  * individual request and stores it in one or both of the request's 
  * elevator_private and elevator_private2 fields.
- */
 static void clook_set_request(void)
 {
 
 }
+*/
 
 /* deallocates memory allocated by elevator_set_req_fn; called after 
  * elevator_dispatch_fn
- */
 static void clook_put_request(void)
 {
 
 }
+*/
 
 static struct elevator_type elevator_clook = {
     .ops = {
@@ -187,8 +261,8 @@ static struct elevator_type elevator_clook = {
         .elevator_latter_req_fn		= clook_latter_request,
         .elevator_init_fn		= clook_init_queue,
         .elevator_exit_fn		= clook_exit_queue,
-        .elevator_set_req_fn    = clook_set_request,
-        .elevator_put_req_fn    = clook_put_request,
+        //.elevator_set_req_fn    = clook_set_request,
+        //.elevator_put_req_fn    = clook_put_request,
     },
     .elevator_name = "clook",
     .elevator_owner = THIS_MODULE,
