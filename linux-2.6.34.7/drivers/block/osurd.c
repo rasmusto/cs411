@@ -1,5 +1,10 @@
 /*
  * CS411
+ * Project 04
+ * Jake Cray
+ * Rodney Keeling
+ * Torben Rasmussen 
+ * Helen Shin
  */
 
 #include <linux/config.h>
