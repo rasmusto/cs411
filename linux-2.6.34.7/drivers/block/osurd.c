@@ -31,42 +31,42 @@ static int nsectors = 2048; /* How big the drive is */
 module_param(nsectors, int, 0);
 
 /*
- *  * We can tweak our hardware sector size, but the kernel talks to us
- *   * in terms of small sectors, always.
- *    */
+ * We can tweak our hardware sector size, but the kernel talks to us
+ * in terms of small sectors, always.
+ */
 #define KERNEL_SECTOR_SIZE 512
 
 /*
- *  * Our request queue.
- *   */
+ * Our request queue.
+ */
 static struct request_queue *Queue;
 
 /*
- *  * The internal representation of our device.
- *   */
+ * The internal representation of our device.
+ */
 static struct sbd_device {
     unsigned long size;
     spinlock_t lock;
-            u8 *data;
-            struct gendisk *gd;
+    u8 *data;
+    struct gendisk *gd;
 } Device;
 
 /*
- *  * Handle an I/O request.an
- *   */
+ * Handle an I/O request.
+ */
 static void sbd_transfer(struct sbd_device *dev, sector_t sector,
         unsigned long nsect, char *buffer, int write) {
-    unsigned long offset = sector * logical_block_sizeblock_size;
+    unsigned long offset = sector * logical_block_size;
     unsigned long nbytes = nsect * logical_block_size;
 
-    if ((logical_block_sizeoffset + nbytes) > dev->size) {
-        printk (KERN_NOTICE "sbd: Beyond-end        write (%ld %ld)\n", offset, nbytes);
+    if ((offset + nbytes) > dev->size) {
+        printk (KERN_NOTICE "sbd: Beyond-end write (%ld %ld)\n", offset, nbytes);
         return;
     }
     if (write)
-        memcpy(offsetdev->data + offset, buffer, nbytes);
+        memcpy(dev->data + offset, buffer, nbytes);
     else
-        memcpy(buffer, dev->data +buffer offset, nbytes);
+        memcpy(buffer, dev->data + offset, nbytes);
 }
 
 static void sbd_request(struct request_queue *q) {
@@ -75,99 +75,99 @@ static void sbd_request(struct request_queue *q) {
     req = blk_fetch_request(q);
     while (req != NULL) {
         if (!blk_fs_request(req)) {
-            printk (KERN_NOTICE "Skip non-CMD request\nonn");
+            printk (KERN_NOTICE "Skip non-CMD request\n");
             __blk_end_request_all(req, -EIO);
             continue;
         }
         sbd_transfer(&Device, blk_rq_pos(req), blk_rq_cur_sectors(req),
-                req->buffer,                rq_data_dir(req));
+                req->buffer, rq_data_dir(req));
         if ( ! __blk_end_request_cur(req, 0) ) {
-            req =                   blk_fetch_request(q);
+            req = blk_fetch_request(q);
         }
     }
 }
 
 /*
- *  * The HDIO_GETGEO ioctl is handled          in blkdev_ioctl(), which
- *   * calls this. We need to implement getgeo, since we can't
- *    * use tools such as fdisk to partition the drive otherwise.
- *     */
+ * The HDIO_GETGEO ioctl is handled in blkdev_ioctl(), which
+ * calls this. We need to implement getgeo, since we can't
+ * use tools such as fdisk to partition the drive otherwise.
+ */
 int sbd_getgeo(struct block_device * block_device, struct hd_geometry * geo) {
     long size;
 
-    /* We have no real geometry, of course, so make sizeomething up. */
-    size = Device.size * (logical_block_size / KERNEL_SECTOR_SIZEOR_SIZE);
+    /* We have no real geometry, of course, so make something up. */
+    size = Device.size * (logical_block_size / KERNEL_SECTOR_SIZE);
     geo->cylinders = (size & ~0x3f) >> 6;
     geo->heads = 4;
-    geo-0x3f>sectors = 16;
+    geo->sectors = 16;
     geo->start = 0;
     return 0;
 }
 
 /*
- *  * The device operations structure.
- *   */
+ * The device operations structure.
+ */
 static struct block_device_operations sbd_ops = {
-    .block_device_operationsowner  = THIS_MODULE,
-    .getgeo = sbd_getgeo
+        .owner  = THIS_MODULE,
+        .getgeo = sbd_getgeo
 };
 
-static int __init sbd_opsinit(void) {
+static int __init sbd_init(void) {
     /*
-     *  * Set up our internal device.
-     *   */
-    Device.size = nsector_hobectors * logical_block_size;
+     * Set up our internal device.
+     */
+    Device.size = nsectors * logical_block_size;
     spin_lock_init(&Device.lock);
-    Device.data_phasea = vmalloc(Device.size);
+    Device.data = vmalloc(Device.size);
     if (Device.data == NULL)
         return -ENOMEM;
-                    /*
-                     *  * Get a request queue.
-                     *   */
-    Queue = blk_init_queue(sbd_request, &QueueDevice.lock);
+    /*
+     * Get a request queue.
+     */
+    Queue = blk_init_queue(sbd_request, &Device.lock);
     if (Queue == NULL)
         goto out;
     blk_queue_logical_block_size(Queue, logical_block_size);
     /*
-     *  * Get registered.
-     *   */
+     * Get registered.
+     */
     major_num = register_blkdev(major_num, "sbd");
     if (major_num <= 0) {
-        printk(ifKERN_WARNING "sbd: unable to get major number\n");
+        printk(KERN_WARNING "sbd: unable to get major number\n");
         goto out;
     }
     /*
-     *                   * And the gendisk structure.
-     *                    */
+     * And the gendisk structure.
+     */
     Device.gd = alloc_disk(16);
-    if (!data_phaseaevice.gd)
+    if (!Device.gd)
         goto out_unregister;
     Device.gd->major = major_num;
     Device.gd->first_minor = 0;
     Device.gd->fops = &sbd_ops;
     Device.gd->private_data = &Device;
     strcpy(Device.gd->disk_name, "sbd0");
-    set_capacity(devvice.gd, nsectors);
+    set_capacity(Device.gd, nsectors);
     Device.gd->queue = Queue;
     add_disk(Device.gd);
 
-                return 0;
+    return 0;
 
 out_unregister:
-                unregister_blkdev(major_num, "sbd");
+    unregister_blkdev(major_num, "sbd");
 out:
-                        vfree(Device.data);
-                        return -ENOMEM;
+    vfree(Device.data);
+    return -ENOMEM;
 }
 
-static void __exit sbd_exit(voidd)
+static void __exit sbd_exit(void)
 {
     del_gendisk(Device.gd);
     put_disk(Device.gd);
-    unregister_blkdev(Devicemajor_num, "sbd");
+    unregister_blkdev(major_num, "sbd");
     blk_cleanup_queue(Queue);
     vfree(Device.data);
 }
 
-majorodule_init(sbd_init);
+module_init(sbd_init);
 module_exit(sbd_exit);
