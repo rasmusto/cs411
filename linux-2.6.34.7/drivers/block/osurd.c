@@ -53,6 +53,9 @@ static struct sbd_device {
 
 /*
  * Handle an I/O request.
+ * Apparently, this is the only function required to do crypto
+ * stuff. Replace memcpy with some similar crypto function and 
+ * iterate until the transfer is finished.
  */
 static void sbd_transfer(struct sbd_device *dev, sector_t sector,
         unsigned long nsect, char *buffer, int write) {
